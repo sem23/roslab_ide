@@ -9,8 +9,8 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QDialog, QDialogButtonBox
-from python_qt_binding.QtCore import QSettings
+from PyQt4.QtGui import QDialog, QDialogButtonBox
+from PyQt4.QtCore import QSettings
 
 import roslab_ide.helper.globals as g
 

@@ -9,8 +9,8 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from PyQt4.QtCore import pyqtSlot, QSettings
-from python_qt_binding.QtGui import QAction, QMenu, QTreeWidgetItem, QIcon
-from python_qt_binding.QtGui import QDialog, QInputDialog, QFileDialog, QTreeWidgetItem, QMessageBox
+from PyQt4.QtGui import QAction, QMenu, QTreeWidgetItem, QIcon
+from PyQt4.QtGui import QDialog, QInputDialog, QFileDialog, QTreeWidgetItem, QMessageBox
 
 import roslab_ide.helper.globals as g
 
@@ -535,7 +535,7 @@ class Controller(object):
         Controller._workspace_path = str(settings.value('current_ws_path', ''))
         # get first run workspace path
         while Controller._workspace_path is '':
-            Controller._workspace_path = str(QFileDialog.getExistingDirectory('Set ROS catkin workspace'))
+            Controller._workspace_path = str(QFileDialog.getExistingDirectory(caption='Set ROS catkin workspace'))
         print('restored ROS workspace path: {0}'.format(Controller._workspace_path))
         # get workspace name and set it as item text
         Controller._workspace_name = Controller._workspace_path.split('/')[-1]
@@ -543,14 +543,12 @@ class Controller(object):
 
     @staticmethod
     def change_workspace():
-        # FIXME parent widget in file dialog is maybe missing
-        global path
         # reset path
         Controller._workspace_path = path = ''
         # get new path
-        while path is '':
-            path = str(QFileDialog.getExistingDirectory('Set ROS catkin workspace'))
-        print('changed ROS workspace path to: {0}'.format(path))
+        while Controller._workspace_path is '':
+            Controller._workspace_path = str(QFileDialog.getExistingDirectory(caption='Set ROS catkin workspace'))
+        print('changed ROS workspace path to: {0}'.format(Controller._workspace_path))
         # store settings
         Controller.store_settings()
 

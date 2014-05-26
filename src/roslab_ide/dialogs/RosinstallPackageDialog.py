@@ -10,7 +10,7 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QDialog
+from PyQt4.QtGui import QDialog
 
 
 class RosinstallPackageDialog(QDialog):

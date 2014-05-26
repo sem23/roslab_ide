@@ -9,8 +9,8 @@ import yaml
 
 # pyqt imports
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import pyqtSlot
-from python_qt_binding.QtGui import QDialog
+from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtGui import QDialog
 
 
 # ROS imports

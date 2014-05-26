@@ -10,8 +10,8 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QWidget
-from python_qt_binding.QtCore import QTimer, QProcess, QSettings
+from PyQt4.QtGui import QWidget
+from PyQt4.QtCore import QTimer, QProcess, QSettings
 
 
 class ExternalProcessWidget(QWidget):

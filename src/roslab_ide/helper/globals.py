@@ -5,8 +5,8 @@ import yaml
 import rosmsg
 
 # pyqt imports
-from python_qt_binding.QtGui import QProgressDialog, QTreeWidgetItem, QMessageBox
-from python_qt_binding.QtCore import Qt, QSettings
+from PyQt4.QtGui import QProgressDialog, QTreeWidgetItem, QMessageBox
+from PyQt4.QtCore import Qt, QSettings
 
 # settings
 name = ''
