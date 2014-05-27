@@ -74,7 +74,7 @@ class CommunicationDialog(QDialog):
             self.data['callback'] = callback
             self.callback_data = {
                 'name': callback,
-                'args': '{0}_{1}'.format(cleaned_topic, suffix),
+                'args': [{'name': '{0}_{1}'.format(cleaned_topic, suffix)}],
                 'code': '# TODO implement me!'
             }
         elif comm == 'Service Server':
@@ -85,7 +85,7 @@ class CommunicationDialog(QDialog):
             self.data['callback'] = callback
             self.callback_data = {
                 'name': callback,
-                'args': '{0}_{1}'.format(cleaned_topic, suffix),
+                'args': [{'name': '{0}_{1}'.format(cleaned_topic, suffix)}],
                 'code': '# TODO implement me!'
             }
         else:

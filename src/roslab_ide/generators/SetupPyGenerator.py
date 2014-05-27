@@ -11,7 +11,7 @@ class SetupPyGenerator(Generator):
         self._name = name
         self._requirements = []
         for req in requirements:
-            self._requirements.append(req)
+            self._requirements.append(req['name'])
 
     def generate(self):
         generated = [
@@ -24,7 +24,7 @@ class SetupPyGenerator(Generator):
             'setup_args = generate_distutils_setup(',
             "    packages=['{}'],".format(self._name),
             "    package_dir={'': 'src'},",
-            "    requires=['{}']".format("', '".join(self._requirements)),
+            "    requires=['{}']".format("', '".join(self._requirements) if len(self._requirements) else ''),
             ')',
             'setup(**setup_args)'
         ]

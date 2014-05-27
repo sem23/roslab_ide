@@ -15,7 +15,7 @@ from PyQt4.QtGui import QDialog
 
 class ParameterDialog(QDialog):
 
-    def __init__(self, data, parent=None):
+    def __init__(self, data=None, parent=None):
         QDialog.__init__(self, parent=parent)
         # setup user interface
         ui_file = os.path.join(rp.get_path('roslab_ide'), 'resource', 'dialogs', 'ParameterDialog.ui')

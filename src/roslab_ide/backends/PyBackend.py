@@ -310,7 +310,7 @@ class PyBackend():
         # add published data to class initials
         self._class_initials.append('self.{0} = {1}()'.format(cleaned_topic, msg_class))
 
-    def add_subscriber(self, msg_type, topic, cb=None):
+    def add_subscriber(self, msg_type, topic, callback):
         # get module and class from msg type
         [module, msg_class] = msg_type.split('/')
         # clean topic
@@ -318,17 +318,17 @@ class PyBackend():
         # add required import
         self.add_import(module + '.msg', msg_class)
         # check if callback is set, otherwise construct standard callback
-        if not cb:
-            cb = '{0}_cb'.format(cleaned_topic)
-            # setup callback function
-            cb_function = [
-                'def {0}_cb(self, {0}):'.format(cleaned_topic),
-                'self.{0} = {0}'.format(cleaned_topic)
-            ]
-            self.add_function(cb_function)
+        # if not callback:
+        #     cb = '{0}_cb'.format(cleaned_topic)
+        #     # setup callback function
+        #     cb_function = [
+        #         'def {0}_cb(self, {0}):'.format(cleaned_topic),
+        #         'self.{0} = {0}'.format(cleaned_topic)
+        #     ]
+        #     self.add_function(cb_function)
         # setup subscriber initializer
         self._sub_init.append("rospy.Subscriber('{0}', {1}, self.{2}, queue_size=10)".format(
-            topic, msg_class, cb))
+            topic, msg_class, callback))
         # add subscribed data to class initials
         self._class_initials.append('self.{0} = {1}()'.format(cleaned_topic, msg_class))
 

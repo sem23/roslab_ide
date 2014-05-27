@@ -433,7 +433,7 @@ class LibraryItem(TreeItem):
     def add_param(self):
         data = Controller.add_parameter(self._package_name, self._name)
         if data:
-            self.add_import_item(data=data)
+            self.add_parameter_item(data=data)
 
     @pyqtSlot()
     def add_basic_comm(self):
@@ -654,7 +654,12 @@ class Controller(object):
         # create dir after all question which can be canceled
         os.mkdir(pkg_dir)
         # add package to managed packages dict
-        package_data = {'name': package_name, 'roslab_version': __version__, 'backend': backend}
+        package_data = {'name': package_name,
+                        'roslab_version': __version__,
+                        'backend': backend,
+                        'libraries': [],
+                        'nodes': []
+                        }
         if backend == 'python':
             package_data['dependencies'] = [{'name': 'rospy'}]
         elif backend == 'cpp':
@@ -668,6 +673,7 @@ class Controller(object):
         # create roslab.yaml
         stream = open(pkg_dir + '/roslab.yaml', 'w')
         yaml.dump(package_data, stream=stream, default_flow_style=False)
+        Controller.generate_package(package=package_name)
         # give response to user
         print('created new package: {0}!'.format(package_name))
 
@@ -717,12 +723,13 @@ class Controller(object):
         # create data
         library_data = {
             'name': library,
-            'author': g.author,
-            'copyright': g.place,
+            'author': str(g.author),
+            'copyright': str(g.place),
             'credits': [],
-            'email': g.email,
+            'email': str(g.email),
             'info': 'TODO',
-            'maintainer': g.author,
+            'maintainer': str(g.author),
+            'license': 'TODO',
             'status': 'freshly generated',
             'version': '0.0.1'
         }
@@ -852,30 +859,44 @@ class Controller(object):
         package_xml = file(os.path.join(package_path, 'package.xml'), 'w+')
         package_xml.write(PackageXmlGenerator(package, build_depends=package_data['dependencies'],
                           run_depends=package_data['dependencies']).generate())
+        package_xml.flush()
+        package_xml.close()
         # update CMakeLists.txt
+        python_setup = False
+        if len(package_data['libraries']):
+            python_setup = True
         cmakelists_txt = file(os.path.join(package_path, 'CMakeLists.txt'), 'w+')
         cmakelists_txt.write(CMakeListsTxtGenerator(package, catkin_depends=package_data['dependencies'],
-                             python_setup=True, python_scripts=package_data['nodes']).generate())
+                             python_setup=python_setup, python_scripts=package_data['nodes']).generate())
+        cmakelists_txt.flush()
+        cmakelists_txt.close()
         # update setup.py if needed
-        setup_py = file(os.path.join(package_path, 'setup.py'), 'w+')
-        setup_py.write(SetupPyGenerator(package, requirements=package_data['dependencies']).generate())
-        # generate libraries
-        if not os.path.exists(os.path.join(package_path, 'src')):
-            os.mkdir(os.path.join(package_path, 'src'))
-        if not os.path.exists(os.path.join(package_path, 'src', package)):
-            os.mkdir(os.path.join(package_path, 'src', package))
-        open(os.path.join(package_path, 'src', package, '__init__.py'), 'w+')
-        libraries = package_data['libraries']
-        for library_data in libraries:
-            library_file = file(os.path.join(package_path, 'src', package, '{}.py'.format(library_data['name'])), 'w+')
-            library_file.write(PyBackend(library_data['name'], data=library_data).generate())
+        if len(package_data['libraries']):
+            setup_py = file(os.path.join(package_path, 'setup.py'), 'w+')
+            setup_py.write(SetupPyGenerator(package, requirements=package_data['dependencies']).generate())
+            setup_py.flush()
+            setup_py.close()
+            # generate libraries
+            if not os.path.exists(os.path.join(package_path, 'src')):
+                os.mkdir(os.path.join(package_path, 'src'))
+            if not os.path.exists(os.path.join(package_path, 'src', package)):
+                os.mkdir(os.path.join(package_path, 'src', package))
+            open(os.path.join(package_path, 'src', package, '__init__.py'), 'w+')
+            for library_data in package_data['libraries']:
+                library_file = file(os.path.join(package_path, 'src', package, '{}.py'.format(library_data['name'])),
+                                    'w+')
+                library_file.write(PyBackend(library_data['name'], data=library_data).generate())
+                library_file.flush()
+                library_file.close()
         # generate nodes
-        if not os.path.exists(os.path.join(package_path, 'scripts')):
-            os.mkdir(os.path.join(package_path, 'scripts'))
-        nodes = package_data['nodes']
-        for node_data in nodes:
-            node_path = os.path.join(package_path, 'scripts', '{}_node'.format(node_data['name']))
-            node_file = file(node_path, 'w+')
-            node_file.write(PyBackend.generate_node(node_data['name'], package, node_data))
-            node_stat = os.stat(node_path)
-            os.chmod(node_path, node_stat.st_mode | stat.S_IEXEC)
+        if len(package_data['nodes']):
+            if not os.path.exists(os.path.join(package_path, 'scripts')):
+                os.mkdir(os.path.join(package_path, 'scripts'))
+            for node_data in package_data['nodes']:
+                node_path = os.path.join(package_path, 'scripts', '{}_node'.format(node_data['name']))
+                node_file = file(node_path, 'w+')
+                node_file.write(PyBackend.generate_node(node_data['name'], package, node_data))
+                node_file.flush()
+                node_file.close()
+                node_stat = os.stat(node_path)
+                os.chmod(node_path, node_stat.st_mode | stat.S_IEXEC)

@@ -12,23 +12,34 @@ class CMakeListsTxtGenerator(Generator):
         self._include_dirs = include_dirs
         self._libraries = libraries
         self._catkin_depends = []
+        if not catkin_depends:
+            catkin_depends = []
         for dep in catkin_depends:
-            self._depends.append(dep['name'])
+            self._catkin_depends.append(dep['name'])
         self._depends = []
+        if not depends:
+            depends = []
         for dep in depends:
             self._depends.append(dep['name'])
+        self._python_scripts = []
+        if not python_scripts:
+            python_scripts = []
         for script in python_scripts:
             self._python_scripts.append(script['name'])
+
         self._python_setup = python_setup
 
         self._generator_chain = [
             self.generate_intro,
-            self.generate_catkin_required_components,
-            self.generate_catkin_python_setup,
+            self.generate_catkin_required_components
+        ]
+        if python_setup:
+            self._generator_chain.append(self.generate_catkin_python_setup)
+        self._generator_chain.extend([
             self.generate_catkin_package,
             self.generate_include_directories,
             self.generate_install_scripts
-        ]
+        ])
 
     def generate_intro(self):
         intro = [

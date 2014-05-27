@@ -18,7 +18,7 @@ class PackageXmlGenerator(Generator):
         self._license = license
         if not build_depends:
             build_depends = []
-        self._run_depends = []
+        self._build_depends = []
         for dep in build_depends:
             self._build_depends.append(dep['name'])
         if not run_depends:

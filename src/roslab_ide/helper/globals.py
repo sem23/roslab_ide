@@ -9,10 +9,11 @@ from PyQt4.QtGui import QProgressDialog, QTreeWidgetItem, QMessageBox
 from PyQt4.QtCore import Qt, QSettings
 
 # settings
-name = ''
-author = ''
-email = ''
-place = ''
+name = 'Change name in global settings'
+author = 'Change name in author settings'
+email = 'Change name in email settings'
+place = 'Change name in place settings'
+license_ = 'Change name in license settings'
 
 # generator backends
 backends = ['python']
