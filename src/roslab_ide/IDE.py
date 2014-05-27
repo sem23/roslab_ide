@@ -30,9 +30,9 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QMainWindow, QGridLayout, QTreeWidgetItem, QProgressDialog, QMenu, QMessageBox
-from python_qt_binding.QtGui import QApplication, QCursor
-from python_qt_binding.QtCore import Qt, QSettings, QSize, QPoint
+from PyQt4.QtGui import QMainWindow, QGridLayout, QTreeWidgetItem, QProgressDialog, QMenu, QMessageBox
+from PyQt4.QtGui import QApplication, QCursor
+from PyQt4.QtCore import Qt, QSettings, QSize, QPoint
 
 # roslab imports
 import roslab_ide.helper.globals as g
@@ -42,10 +42,6 @@ from roslab_ide.helper.ROSCommand import ROSCommand
 from roslab_ide.helper.OutputWriter import OutputWriter
 from roslab_ide.helper.Workspace import Controller
 from roslab_ide.backends.PyEditor import PyEditor, PyFunctionEditor
-
-# from roslab_ide.helper.Library import Library, Function
-# from roslab_ide.helper.ROSLabPackage import ROSLabPackage, Node
-# from roslab_ide.helper.TreeHelper import TreeHelper, WorkspaceItem
 
 
 def change_style(style, representer):
@@ -100,12 +96,6 @@ class MainWindow(QMainWindow):
     def show_ide_settings(self):
         settings_dialog = SettingsDialog(parent=self)
         settings_dialog.exec_()
-
-    def start_node_from_package(self):
-        node_item = self.ui.workspaceTreeWidget.currentItem()
-        node_name = node_item.text(0)
-        # package_name = TreeHelper.get_package_item(node_item).text(0)
-        # ROSCommand.rosrun(package_name, node_name)
 
     def tree_item_selected(self):
         if self._item_menu_action:

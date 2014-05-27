@@ -304,10 +304,14 @@ class LibraryItem(TreeItem):
         add_basic_comm_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons',
                                                          'communication.png')))
         add_basic_comm_action.triggered.connect(self.add_basic_comm)
+        add_function_action = QAction('Function', None)
+        add_function_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')))
+        add_function_action.triggered.connect(self.add_function)
         self._add_actions = [
             add_import_action,
             add_param_action,
-            add_basic_comm_action
+            add_basic_comm_action,
+            add_function_action
         ]
 
         # setup data
@@ -451,6 +455,12 @@ class LibraryItem(TreeItem):
         if callback_data:
             self.add_function_item(data=callback_data)
 
+    @pyqtSlot()
+    def add_function(self):
+        function_data = Controller.add_function(self._package_name, self._name)
+        if function_data:
+            self.add_function_item(data=function_data)
+
 
 class NodeItem(TreeItem):
 
@@ -463,11 +473,24 @@ class NodeItem(TreeItem):
         # set parent package name
         self._package_name = package_name
 
+        # mod actions
+        start_action = QAction('start', None)
+        start_action.triggered.connect(self.start)
+        self._mod_actions = [start_action]
+        # add actions
+
+    @pyqtSlot()
+    def start(self):
+        Controller.start_node(self._package_name, self._name)
+
 
 class FunctionItem(TreeItem):
 
     def __init__(self, parent, data):
         TreeItem.__init__(self, parent=parent, type=g.FUNCTION_ITEM, key='function', data=data)
+
+        # set icon
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')))
 
         # setup data
         if data:
@@ -685,6 +708,10 @@ class Controller(object):
             ROSCommand.wstool('set', **wstool_set_args)
 
     @staticmethod
+    def start_node(package, node):
+        ROSCommand.rosrun(package, node)
+
+    @staticmethod
     def add_dependency(package):
         # get package data
         roslab_packages = Controller._workspace_data['roslab']
@@ -716,7 +743,7 @@ class Controller(object):
         library, ok = QInputDialog.getText(Controller._parent_widget, 'Add library to package', 'library name:')
         library = str(library)
         if not ok or library == '':
-            return
+            return None
         # check existence
         if 'libraries' not in package_data:
             package_data['libraries'] = []
@@ -743,11 +770,38 @@ class Controller(object):
     @staticmethod
     def add_node(package):
         """
+        Add node to package.
 
-        :param package:
-        :return:
+        :param package: Package name where to add node.
+        :return: Returns node data if dialogs are accepted, otherwise None
+        :rtype: dict or None
         """
-        node_data = {}
+        # get package data
+        package_data = Controller.get_package_data(package)
+        # get libraries from package
+        libraries = []
+        for library in package_data['libraries']:
+            libraries.append(library['name'])
+        # return if there are no libraries
+        if not len(libraries):
+            # TODO: add warning message!
+            return None
+        # get user input
+        node, ok = QInputDialog.getText(Controller._parent_widget, 'Add node to package', 'node name:')
+        node = str(node)
+        if not ok or node == '':
+            return None
+        library, ok = QInputDialog.getItem(Controller._parent_widget, 'Set library to call', 'library:', libraries)
+        library = str(library)
+        if not ok or library == '':
+            return None
+        # create node data
+        node_data = {'name': node, 'library': library}
+        # append list
+        package_data['nodes'].append(node_data)
+        # mark changed
+        Controller.data_changed()
+        # return created data
         return node_data
 
     @staticmethod
@@ -824,6 +878,41 @@ class Controller(object):
                 library_data['functions'].append(comm_dialog.callback_data)
             return comm_dialog.comm, comm_dialog.data, comm_dialog.callback_data
         return None, None, None
+
+    @staticmethod
+    def add_advanced_comm(package, library):
+        # TODO: implement me!
+        pass
+
+    @staticmethod
+    def add_function(package, library):
+        """
+        Add function to library in package.
+
+        :type package: str
+        :type library: str
+        :param package: Package containing library.
+        :param library: Library where to add function.
+        :return: Returns function data if dialog is accepted, otherwise None.
+        :rtype: dict or None
+        """
+        library_data = Controller.get_library_data(package=package, library=library)
+        # get user input
+        function, ok = QInputDialog.getText(Controller._parent_widget, 'Add function to library', 'function name:')
+        function = str(function)
+        if not ok or function == '':
+            return None
+        # check existence
+        if 'functions' not in library_data:
+            library_data['functions'] = []
+        # create data
+        function_data = {'name': function, 'args': [], 'code': '# TODO: implement me!\npass'}
+        # append list
+        library_data['functions'].append(function_data)
+        # mark changed
+        Controller.data_changed()
+        # return created data
+        return function_data
 
     @staticmethod
     def preview_library(package, library):

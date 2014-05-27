@@ -24,7 +24,7 @@ class SettingsDialog(QDialog):
         self.ui = loadUi(ui_file, self)
 
         # signals
-        apply_button = self.ui.buttonBox.button(QDialogButtonBox.ApplyRole)
+        apply_button = self.ui.buttonBox.button(QDialogButtonBox.Apply)
         apply_button.clicked.connect(self.applyChanges)
 
         # fill initials
