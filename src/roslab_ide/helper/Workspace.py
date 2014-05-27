@@ -9,7 +9,7 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from PyQt4.QtCore import pyqtSlot, QSettings
-from PyQt4.QtGui import QAction, QMenu, QTreeWidgetItem, QIcon
+from PyQt4.QtGui import QAction, QMenu, QTreeWidgetItem, QIcon, QLineEdit
 from PyQt4.QtGui import QDialog, QInputDialog, QFileDialog, QTreeWidgetItem, QMessageBox
 
 import roslab_ide.helper.globals as g
@@ -28,10 +28,6 @@ from roslab_ide.generators.SetupPyGenerator import SetupPyGenerator
 from roslab_ide.IDE import __version__
 
 
-# from roslab_ide.helper.globals import UNDEFINED_ITEM, ROSLAB_ITEM, UNMANAGED_ITEM, ROSINSTALL_ITEM
-# from roslab_ide.helper.globals import ROSLAB_PACKAGE_ITEM, UNMANAGED_PACKAGE_ITEM, ROSINSTALL_PACKAGE_ITEM
-
-
 class TreeItem(QTreeWidgetItem):
 
     def __init__(self, parent, type=g.UNDEFINED_ITEM, key=None, value=None, data=None):
@@ -46,6 +42,7 @@ class TreeItem(QTreeWidgetItem):
             self.setText(1, str(value))
         # add data as key value items
         if data:
+            # add key value items from data
             self.add_key_value_items(data=data)
             # overwrite item name and value if data has key 'name'
             if 'name' in data:
@@ -57,11 +54,11 @@ class TreeItem(QTreeWidgetItem):
         # cache context menu
         self._context_menu = None
 
-    def add_key_value_item(self, key, value):
+    def add_key_value_item(self, data, key, value):
         """
         Add a single key value item to this item and return it.
         """
-        return KeyValueItem(key, value, parent=self)
+        return KeyValueItem(parent=self, data=data, key=key, value=value)
 
     def add_key_value_items(self, data):
         """
@@ -72,7 +69,7 @@ class TreeItem(QTreeWidgetItem):
             # only add simple types as key value items
             if type(value) is list or type(value) is dict:
                 continue
-            key_value_items.append(KeyValueItem(key, value, parent=self))
+            key_value_items.append(KeyValueItem(parent=self, data=data, key=key, value=value))
         return key_value_items
 
     def get_context_menu(self):
@@ -291,6 +288,8 @@ class LibraryItem(TreeItem):
         # set parent package name
         self._package_name = package_name
         self._function_items = []
+        self._tf_item = None
+        self._tf_items = []
 
         # mod actions
         # add actions
@@ -304,6 +303,12 @@ class LibraryItem(TreeItem):
         add_basic_comm_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons',
                                                          'communication.png')))
         add_basic_comm_action.triggered.connect(self.add_basic_comm)
+        add_tf_broadcaster_action = QAction('Tf Broadcaster', None)
+        add_tf_broadcaster_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')))
+        add_tf_broadcaster_action.triggered.connect(self.add_tf_broadcaster)
+        add_tf_listener_action = QAction('Tf Listener', None)
+        add_tf_listener_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')))
+        add_tf_listener_action.triggered.connect(self.add_tf_listener)
         add_function_action = QAction('Function', None)
         add_function_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')))
         add_function_action.triggered.connect(self.add_function)
@@ -311,6 +316,8 @@ class LibraryItem(TreeItem):
             add_import_action,
             add_param_action,
             add_basic_comm_action,
+            add_tf_broadcaster_action,
+            add_tf_listener_action,
             add_function_action
         ]
 
@@ -348,6 +355,7 @@ class LibraryItem(TreeItem):
                 for entry in data['sac']:
                     self.add_simple_action_client_item(data=entry)
             if 'tf' in data:
+                self._tf_item = TreeItem(parent=self, key='tf')
                 if 'broadcaster' in data['tf']:
                     for entry in data['tf']['broadcaster']:
                         self.add_tf_broadcaster_item(data=entry)
@@ -407,10 +415,14 @@ class LibraryItem(TreeItem):
         return item
 
     def add_tf_broadcaster_item(self, data):
-        return TreeItem(parent=self, key='tf broadcaster', data=data)
+        if not self._tf_item:
+            self._tf_item = TreeItem(parent=self, key='tf')
+        return TreeItem(parent=self._tf_item, key='broadcaster', data=data)
 
     def add_tf_listener_item(self, data):
-        return TreeItem(parent=self, key='tf listener', data=data)
+        if not self._tf_item:
+            self._tf_item = TreeItem(parent=self, key='tf')
+        return TreeItem(parent=self._tf_item, key='listener', data=data)
 
     def add_function_item(self, data):
         function_item = FunctionItem(parent=self, data=data)
@@ -454,6 +466,18 @@ class LibraryItem(TreeItem):
             return
         if callback_data:
             self.add_function_item(data=callback_data)
+
+    @pyqtSlot()
+    def add_tf_broadcaster(self):
+        data = Controller.add_tf_broadcaster(self._package_name, self._name)
+        if data:
+            self.add_tf_broadcaster_item(data=data)
+
+    @pyqtSlot()
+    def add_tf_listener(self):
+        data = Controller.add_tf_listener(self._package_name, self._name)
+        if data:
+            self.add_tf_listener_item(data=data)
 
     @pyqtSlot()
     def add_function(self):
@@ -504,8 +528,24 @@ class FunctionItem(TreeItem):
 
 class KeyValueItem(TreeItem):
 
-    def __init__(self, key, value, parent):
+    def __init__(self, parent, data, key, value):
         TreeItem.__init__(self, parent=parent, type=g.KEY_VALUE_ITEM, key=key, value=value)
+
+        # mod actions
+        edit_action = QAction('Edit', None)
+        edit_action.triggered.connect(self.edit_value)
+        self._mod_actions = [edit_action]
+
+        # store data
+        self._data = data
+
+    @pyqtSlot()
+    def edit_value(self):
+        key = self.text(0)
+        value = self.text(1)
+        data = Controller.modify_single_item_data(data=self._data, key=key, current_value=value)
+        if data:
+            self.setText(1, data[key])
 
 
 class Controller(object):
@@ -701,6 +741,13 @@ class Controller(object):
         print('created new package: {0}!'.format(package_name))
 
     @staticmethod
+    def remove_roslab_package(package):
+        package_list = list(Controller._workspace_data['roslab'])
+        for package_data in package_list:
+            if package_data['name'] == package:
+                package_list.remove(package_data)
+
+    @staticmethod
     def add_rosinstall_package():
         wstool_set_args = {}
         rosinstall_package_dialog = RosinstallPackageDialog(wstool_set_args, parent=Controller._parent_widget)
@@ -709,11 +756,23 @@ class Controller(object):
 
     @staticmethod
     def start_node(package, node):
+        """
+        Start node from package. Rosrun will be called in external process.
+
+        :param package:
+        :param node:
+        """
         ROSCommand.rosrun(package, node)
 
     @staticmethod
     def add_dependency(package):
         # get package data
+        """
+        Add dependency to package.
+
+        :param package:
+        :return:
+        """
         roslab_packages = Controller._workspace_data['roslab']
         package_data = g.get_dict_list_entry_by_key_value(roslab_packages, 'name', package)
         # get user input
@@ -737,6 +796,12 @@ class Controller(object):
     @staticmethod
     def add_library(package):
         # get package data
+        """
+        Add library to package.
+
+        :param package:
+        :return:
+        """
         roslab_packages = Controller._workspace_data['roslab']
         package_data = g.get_dict_list_entry_by_key_value(roslab_packages, 'name', package)
         # get user input
@@ -766,6 +831,20 @@ class Controller(object):
         Controller.data_changed()
         # return created data
         return library_data
+
+    @staticmethod
+    def remove_library(package, library):
+        # get package data
+        """
+        Remove library from package.
+
+        :param package:
+        :param library:
+        """
+        package_data = Controller.get_package_data(package)
+        for library_data in package_data['libraries']:
+            if library_data['name'] == library:
+                list(package_data['libraries']).remove(library_data)
 
     @staticmethod
     def add_node(package):
@@ -805,6 +884,20 @@ class Controller(object):
         return node_data
 
     @staticmethod
+    def remove_node(package, node):
+        # get package data
+        """
+        Remove node from package.
+
+        :param package:
+        :param node:
+        """
+        package_data = Controller.get_package_data(package)
+        for node_data in package_data['nodes']:
+            if node_data['name'] == node:
+                list(package_data['nodes']).remove(node_data)
+
+    @staticmethod
     def add_import(package, library):
         """
         Add import to packages' library.
@@ -828,6 +921,20 @@ class Controller(object):
         return None
 
     @staticmethod
+    def remove_import(package, library, module, include=None):
+        # get library data
+        """
+        Remove module/class-import from packages' library.
+
+        :param package:
+        :param library:
+        :param module:
+        :param include:
+        """
+        library_data = Controller.get_library_data(package=package, library=library)
+        # TODO: implement me!
+
+    @staticmethod
     def add_parameter(package, library):
         """
         Add parameter to packages' library.
@@ -849,6 +956,24 @@ class Controller(object):
             Controller.data_changed()
             return param_dialog.data
         return None
+
+    @staticmethod
+    def remove_parameter(package, library, parameter):
+        """
+        Remove parameter from packages' library.
+
+        :type package: str
+        :type library: str
+        :type parameter: str
+        :param package:
+        :param library:
+        :param parameter:
+        """
+        # get library data
+        library_data = Controller.get_library_data(package=package, library=library)
+        for param_data in library_data['params']:
+            if param_data['name'] == parameter:
+                library_data['params'].remove(param_data)
 
     @staticmethod
     def add_basic_communication(package, library):
@@ -883,6 +1008,48 @@ class Controller(object):
     def add_advanced_comm(package, library):
         # TODO: implement me!
         pass
+
+    @staticmethod
+    def add_tf_listener(package, library):
+        # get library data
+        library_data = Controller.get_library_data(package=package, library=library)
+        # get user input
+        parent, ok = QInputDialog.getText(Controller._parent_widget, 'Add tf listener to package', 'parent frame:')
+        parent = str(parent)
+        if not ok or parent == '':
+            return None
+        child, ok = QInputDialog.getText(Controller._parent_widget, 'Add tf listener to package', 'child frame:')
+        child = str(child)
+        if not ok or child == '':
+            return None
+        tf_data = {'parent_frame': parent, 'child_frame': child}
+        if 'tf' not in library_data:
+            library_data['tf'] = {}
+        if 'listener' not in library_data['tf']:
+            library_data['tf']['listener'] = []
+        library_data['tf']['listener'].append(tf_data)
+        return tf_data
+
+    @staticmethod
+    def add_tf_broadcaster(package, library):
+        # get library data
+        library_data = Controller.get_library_data(package=package, library=library)
+        # get user input
+        parent, ok = QInputDialog.getText(Controller._parent_widget, 'Add tf broadcaster to package', 'parent frame:')
+        parent = str(parent)
+        if not ok or parent == '':
+            return None
+        child, ok = QInputDialog.getText(Controller._parent_widget, 'Add tf broadcaster to package', 'child frame:')
+        child = str(child)
+        if not ok or child == '':
+            return None
+        tf_data = {'parent_frame': parent, 'child_frame': child}
+        if 'tf' not in library_data:
+            library_data['tf'] = {}
+        if 'broadcaster' not in library_data['tf']:
+            library_data['tf']['broadcaster'] = []
+        library_data['tf']['broadcaster'].append(tf_data)
+        return tf_data
 
     @staticmethod
     def add_function(package, library):
@@ -939,6 +1106,22 @@ class Controller(object):
         library_functions = library_data['functions']
         function_data = g.get_dict_list_entry_by_key_value(library_functions, 'name', function)
         return function_data
+
+    @staticmethod
+    def modify_single_item_data(data, key, current_value):
+        # get new value for key
+        new_value, ok = QInputDialog.getText(Controller._parent_widget, 'Edit ' + key, 'New value:',
+                                             QLineEdit.Normal, current_value)
+        # validate
+        new_value = str(new_value)
+        if not ok or new_value == '':
+            return None
+        # set new value in dict
+        data[key] = new_value
+        # mark data as changed
+        Controller.data_changed()
+        # return modified data
+        return data
 
     @staticmethod
     def generate_package(package):

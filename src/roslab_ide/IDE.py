@@ -140,7 +140,11 @@ class MainWindow(QMainWindow):
         really_quit = QMessageBox.question(self, 'Close ROSLab IDE', 'Do you really want to close application?',
                                            QMessageBox.No, QMessageBox.Yes)
         if really_quit == QMessageBox.Yes:
+            # store widget settings
             self.save_settings()
+            # store globals (MSGS, SRVS)
+            g.store_settings()
+            # store workspace settings
             Controller.store_settings()
             if Controller.has_unsaved_changes():
                 save_changes = QMessageBox.question(self, 'Close ROSLab IDE', 'Do you want to save changes?',

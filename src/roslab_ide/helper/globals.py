@@ -69,21 +69,28 @@ def scan_ros_distro():
     progress_dialog = QProgressDialog('Scanning ROS Distro', 'Cancel', 0, len(ROS_PKGS), parent=main_widget)
     progress_dialog.setWindowModality(Qt.WindowModal)
     count = 0
+    total = len(ROS_PKGS)
     for package in ROS_PKGS:
         if progress_dialog.wasCanceled():
             ROS_MSGS = []
             ROS_SRVS = []
             break
         progress_dialog.setValue(count)
-        progress_dialog.setLabelText('Scanning ROS Distro\nscanning {}...'.format(package))
+        progress_dialog.setLabelText('Scanning ROS Distro\nscanning {0} from {1}: {2}...'.format(
+            count+1, total, package))
         if len(rosmsg.list_msgs(package)) > 0:
             ROS_MSGS.append(package)
-            progress_dialog.setLabelText('Scanning ROS Distro\nscanning {}...\nfound messages...'.format(package))
+            progress_dialog.setLabelText('Scanning ROS Distro\nscanning {0} from {1}: {2}...\nfound messages...'.format(
+                count+1, total, package))
         if len(rosmsg.list_srvs(package)) > 0:
-            progress_dialog.setLabelText('Scanning ROS Distro\nscanning {}...\nfound services...'.format(package))
+            progress_dialog.setLabelText('Scanning ROS Distro\nscanning {0} from {1}: {2}...\nfound services...'.format(
+                count+1, total, package))
             ROS_SRVS.append(package)
         count += 1
     progress_dialog.setValue(len(ROS_PKGS))
+    # store settings
+    store_settings()
+    print 'stored {0} msgs and {1} srvs...'.format(len(ROS_MSGS), len(ROS_SRVS))
 
 
 def restore_settings():
@@ -101,7 +108,8 @@ def restore_settings():
         name = settings.value('name', '')
         ROS_MSGS.append(name)
     settings.endArray()
-    print('found {0} packages containing messages'.format(len(ROS_MSGS)))
+    if len(ROS_MSGS):
+        print('found {0} packages containing messages'.format(len(ROS_MSGS)))
     # get service packages
     size = settings.beginReadArray('srv_packages')
     for i in range(size):
@@ -109,8 +117,9 @@ def restore_settings():
         name = settings.value('name', '')
         ROS_SRVS.append(name)
     settings.endArray()
-    print('found {0} packages containing services'.format(len(ROS_SRVS)))
-    if len(ROS_MSGS) == 0 and len(ROS_SRVS) == 0:
+    if len(ROS_SRVS):
+        print('found {0} packages containing services'.format(len(ROS_SRVS)))
+    if not (len(ROS_MSGS) or len(ROS_SRVS)):
         QMessageBox.information(main_widget, 'ROSLab IDE', 'Could not load message & service packages. Will scan now!')
         scan_ros_distro()
 

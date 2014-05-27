@@ -24,7 +24,16 @@ class RosinstallPackageDialog(QDialog):
         # vars
         self.data = data
 
+    def validate(self):
+        uri = str(self.ui.uriLineEdit.text())
+        if not uri.startswith('http'):
+            return False
+        return True
+
     def accept(self):
+        if not self.validate():
+            return
+
         self.data['name'] = str(self.ui.nameLineEdit.text())
         self.data['vcs'] = str(self.ui.vcsComboBox.currentText())
         self.data['uri'] = str(self.ui.uriLineEdit.text())

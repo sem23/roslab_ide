@@ -333,6 +333,7 @@ class PyBackend():
         self._class_initials.append('self.{0} = {1}()'.format(cleaned_topic, msg_class))
 
     def add_service_server(self, msg_type, topic, cb=None):
+        # TODO: fixme!
         # get module and class from msg type
         [module, msg_class] = msg_type.split('/')
         # clean topic
@@ -354,6 +355,7 @@ class PyBackend():
             topic, msg_class, cb, cleaned_topic))
 
     def add_service_client(self, msg_type, topic):
+        # TODO: fixme!
         # get module and class from msg type
         [module, msg_class] = msg_type.split('/')
         # clean topic
@@ -427,6 +429,7 @@ class PyBackend():
         self._functions.append(self.make_intended_block(function))
 
     def add_simple_action_server(self, msg_type, topic, execute_callback):
+        # TODO: fixme!
         # get module and class from msg type
         [module, msg_class] = msg_type.split('/')
         # clean topic
@@ -449,6 +452,7 @@ class PyBackend():
             topic, msg_class, execute_callback, cleaned_topic))
 
     def add_simple_action_client(self, msg_type, topic, feedback_callback, result_callback):
+        # TODO: fixme!
         # get module and class from msg type
         [module, msg_class] = msg_type.split('/')
         # clean topic
