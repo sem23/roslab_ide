@@ -14,6 +14,7 @@ from PyQt4.QtGui import QWidget
 from PyQt4.QtCore import QTimer, QProcess, QSettings
 
 
+# FIXME: If one widget is closed other opened process widgets seem to close too
 class ExternalProcessWidget(QWidget):
 
     def __init__(self, command, working_dir=None, parent=None):
@@ -35,6 +36,11 @@ class ExternalProcessWidget(QWidget):
         self.process = QProcess()
         self.process.setWorkingDirectory(working_dir)
         self.process.start('xterm', args)
+
+    def __del__(self):
+        self.process.terminate()
+        self.process.waitForFinished()
+        self.process = None
 
     def save_settings(self):
         pass

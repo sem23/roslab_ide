@@ -30,7 +30,7 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from python_qt_binding import loadUi
-from PyQt4.QtGui import QMainWindow, QGridLayout, QTreeWidgetItem, QProgressDialog, QMenu, QMessageBox
+from PyQt4.QtGui import QMainWindow, QGridLayout, QIcon, QMessageBox
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtCore import Qt, QSettings, QSize, QPoint
 
@@ -64,6 +64,14 @@ class MainWindow(QMainWindow):
         self.ui = loadUi(ui_file, self)
         self.ui.previewTextEdit = PyEditor()
         self.ui.editorLayout = QGridLayout(self.ui.editorFrame).addWidget(self.ui.previewTextEdit)
+        self.ui.workspaceTreeWidget.setSortingEnabled(True)
+        self.ui.workspaceTreeWidget.sortItems(0, Qt.AscendingOrder)
+
+        # additional icons
+        self.ui.actionSettings.setIcon(QIcon(os.path.join(
+            rp.get_path('roslab_ide'), 'resource', 'icons', 'tool_properties.png')))
+        self.ui.actionStart_roscore.setIcon(QIcon(os.path.join(
+            rp.get_path('roslab_ide'), 'resource', 'icons', 'konsole1.png')))
 
         # vars
         self._item_menu_action = None
@@ -98,14 +106,7 @@ class MainWindow(QMainWindow):
         settings_dialog.exec_()
 
     def tree_item_selected(self):
-        if self._item_menu_action:
-            self.ui.menubar.removeAction(self._item_menu_action)
-            self._item_menu_action = None
         current_item = self.ui.workspaceTreeWidget.currentItem()
-        # display item context menu in menu bar
-        context_menu = current_item.get_context_menu()
-        if context_menu:
-            self._item_menu_action = self.ui.menubar.addMenu(context_menu)
         # check if selected item is library item
         item_type = current_item.type()
         if item_type == g.LIBRARY_ITEM:
