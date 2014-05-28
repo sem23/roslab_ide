@@ -3,6 +3,7 @@ __author__ = 'privat'
 import os
 import stat
 import yaml
+import time
 
 import rospkg
 rp = rospkg.RosPack()
@@ -192,9 +193,21 @@ class RoslabPackagesItem(TreeItem):
         self._add_actions = [
             add_package_action
         ]
+        # vars
+        self._package_count = 0
 
     def add_package_item(self, data):
+        # update package count
+        self._package_count += 1
+        self.setText(1, str(self._package_count))
         return RoslabPackageItem(parent=self, data=data)
+
+    def remove_package_item(self):
+        # update package count
+        self._package_count -= 1
+        self.setText(1, str(self._package_count))
+        # TODO: implement me!
+        pass
 
 
 class RoslabPackageItem(TreeItem):
@@ -308,7 +321,12 @@ class RosinstallPackagesItem(TreeItem):
         add_package_action.triggered.connect(self._workspace_item.add_rosinstall_package)
         self._add_actions = [add_package_action]
 
+        # vars
+        self._package_count = 0
+
     def add_package_item(self, data):
+        self._package_count += 1
+        self.setText(1, str(self._package_count))
         return RosinstallPackageItem(parent=self, data=data)
 
 
@@ -435,8 +453,7 @@ class LibraryItem(TreeItem):
                 for entry in data['sac']:
                     self.add_simple_action_client_item(data=entry)
             if 'tf' in data:
-                self._tf_item = TreeItem(parent=self)
-                self._tf_item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+                self._tf_item = TransformationsItem(parent=self)
                 if 'broadcaster' in data['tf']:
                     for entry in data['tf']['broadcaster']:
                         self.add_tf_broadcaster_item(data=entry)
@@ -448,65 +465,134 @@ class LibraryItem(TreeItem):
                     self.add_function_item(data=entry)
 
     def add_import_item(self, data):
-        param_item = TreeItem(parent=self, data=data)
-        param_item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'import.png')))
-        return param_item
+        item = TreeItem(parent=self, data=data)
+        item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'import.png')))
+        # set info
+        item.setToolTip(0, 'Import')
+        item.setToolTip(1, 'Import')
+        item.setStatusTip(0, 'Import')
+        item.setStatusTip(1, 'Import')
+        item.setWhatsThis(0, 'Import')
+        item.setWhatsThis(1, 'Import')
+        return item
 
     def add_parameter_item(self, data):
-        param_item = TreeItem(parent=self, data=data)
-        param_item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'param.png')))
-        return param_item
+        item = TreeItem(parent=self, data=data)
+        # set icon
+        item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'param.png')))
+        # set info
+        item.setToolTip(0, 'Parameter')
+        item.setToolTip(1, 'Parameter name')
+        item.setStatusTip(0, 'Parameter')
+        item.setStatusTip(1, 'Parameter name')
+        item.setWhatsThis(0, 'Parameter')
+        item.setWhatsThis(1, 'Parameter name')
+        return item
 
     def add_publisher_item(self, data):
         item = TreeItem(parent=self, data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_out.png')))
+        # set info
+        item.setToolTip(0, 'Publisher')
+        item.setToolTip(1, 'Publisher')
+        item.setStatusTip(0, 'Publisher')
+        item.setStatusTip(1, 'Publisher')
+        item.setWhatsThis(0, 'Publisher')
+        item.setWhatsThis(1, 'Publisher')
         return item
 
     def add_subscriber_item(self, data):
         item = TreeItem(parent=self, data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_in.png')))
+        # set info
+        item.setToolTip(0, 'Subscriber')
+        item.setToolTip(1, 'Subscriber')
+        item.setStatusTip(0, 'Subscriber')
+        item.setStatusTip(1, 'Subscriber')
+        item.setWhatsThis(0, 'Subscriber')
+        item.setWhatsThis(1, 'Subscriber')
         return item
 
     def add_service_server_item(self, data):
         item = TreeItem(parent=self, key='service server', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
+        # set info
+        item.setToolTip(0, 'Service Server')
+        item.setToolTip(1, 'Service Server')
+        item.setStatusTip(0, 'Service Server')
+        item.setStatusTip(1, 'Service Server')
+        item.setWhatsThis(0, 'Service Server')
+        item.setWhatsThis(1, 'Service Server')
         return item
 
     def add_service_client_item(self, data):
         item = TreeItem(parent=self, key='service client', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
+        # set info
+        item.setToolTip(0, 'Service Client')
+        item.setToolTip(1, 'Service Client')
+        item.setStatusTip(0, 'Service Client')
+        item.setStatusTip(1, 'Service Client')
+        item.setWhatsThis(0, 'Service Client')
+        item.setWhatsThis(1, 'Service Client')
         return item
 
     def add_action_server_item(self, data):
         item = TreeItem(parent=self, key='action server', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
+        # set info
+        item.setToolTip(0, 'Action Server')
+        item.setToolTip(1, 'Action Server')
+        item.setStatusTip(0, 'Action Server')
+        item.setStatusTip(1, 'Action Server')
+        item.setWhatsThis(0, 'Action Server')
+        item.setWhatsThis(1, 'Action Server')
         return item
 
     def add_action_client_item(self, data):
         item = TreeItem(parent=self, key='action client', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
+        # set info
+        item.setToolTip(0, 'Action Client')
+        item.setToolTip(1, 'Action Client')
+        item.setStatusTip(0, 'Action Client')
+        item.setStatusTip(1, 'Action Client')
+        item.setWhatsThis(0, 'Action Client')
+        item.setWhatsThis(1, 'Action Client')
         return item
 
     def add_simple_action_server_item(self, data):
         item = TreeItem(parent=self, key='simple action server', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
+        # set info
+        item.setToolTip(0, 'Simple Action Server')
+        item.setToolTip(1, 'Simple Action Server')
+        item.setStatusTip(0, 'Simple Action Server')
+        item.setStatusTip(1, 'Simple Action Server')
+        item.setWhatsThis(0, 'Simple Action Server')
+        item.setWhatsThis(1, 'Simple Action Server')
         return item
 
     def add_simple_action_client_item(self, data):
         item = TreeItem(parent=self, key='simple action client', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
+        # set info
+        item.setToolTip(0, 'Simple Action Client')
+        item.setToolTip(1, 'Simple Action Client')
+        item.setStatusTip(0, 'Simple Action Client')
+        item.setStatusTip(1, 'Simple Action Client')
+        item.setWhatsThis(0, 'Simple Action Client')
+        item.setWhatsThis(1, 'Simple Action Client')
         return item
 
     def add_tf_broadcaster_item(self, data):
         if not self._tf_item:
-            self._tf_item = TreeItem(parent=self)
-            self._tf_item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+            self._tf_item = TransformationsItem(parent=self)
         return TfBroadcasterItem(parent=self._tf_item, data=data)
 
     def add_tf_listener_item(self, data):
         if not self._tf_item:
-            self._tf_item = TreeItem(parent=self)
-            self._tf_item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+            self._tf_item = TransformationsItem(parent=self)
         return TfListenerItem(parent=self._tf_item, data=data)
 
     def add_function_item(self, data):
@@ -599,6 +685,22 @@ class NodeItem(TreeItem):
     @pyqtSlot()
     def start(self):
         Controller.start_node(self._package_name, self._name)
+
+
+class TransformationsItem(TreeItem):
+
+    def __init__(self, parent):
+        TreeItem.__init__(self, parent=parent)
+
+        # set icon
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+        # set info
+        self.setToolTip(0, 'Transformations')
+        self.setToolTip(1, 'Transformations')
+        self.setStatusTip(0, 'Transformations')
+        self.setStatusTip(1, 'Transformations')
+        self.setWhatsThis(0, 'Transformations')
+        self.setWhatsThis(1, 'Transformations')
 
 
 class TfListenerItem(TreeItem):
@@ -895,13 +997,6 @@ class Controller(object):
         print('created new package: {0}!'.format(package_name))
 
     @staticmethod
-    def remove_roslab_package(package):
-        package_list = list(Controller._workspace_data['roslab'])
-        for package_data in package_list:
-            if package_data['name'] == package:
-                package_list.remove(package_data)
-
-    @staticmethod
     def add_rosinstall_package():
         wstool_set_args = {}
         rosinstall_package_dialog = RosinstallPackageDialog(wstool_set_args, parent=Controller._parent_widget)
@@ -987,20 +1082,6 @@ class Controller(object):
         return library_data
 
     @staticmethod
-    def remove_library(package, library):
-        # get package data
-        """
-        Remove library from package.
-
-        :param package:
-        :param library:
-        """
-        package_data = Controller.get_package_data(package)
-        for library_data in package_data['libraries']:
-            if library_data['name'] == library:
-                list(package_data['libraries']).remove(library_data)
-
-    @staticmethod
     def add_node(package):
         """
         Add node to package.
@@ -1038,20 +1119,6 @@ class Controller(object):
         return node_data
 
     @staticmethod
-    def remove_node(package, node):
-        # get package data
-        """
-        Remove node from package.
-
-        :param package:
-        :param node:
-        """
-        package_data = Controller.get_package_data(package)
-        for node_data in package_data['nodes']:
-            if node_data['name'] == node:
-                list(package_data['nodes']).remove(node_data)
-
-    @staticmethod
     def add_import(package, library):
         """
         Add import to packages' library.
@@ -1075,20 +1142,6 @@ class Controller(object):
         return None
 
     @staticmethod
-    def remove_import(package, library, module, include=None):
-        # get library data
-        """
-        Remove module/class-import from packages' library.
-
-        :param package:
-        :param library:
-        :param module:
-        :param include:
-        """
-        library_data = Controller.get_library_data(package=package, library=library)
-        # TODO: implement me!
-
-    @staticmethod
     def add_parameter(package, library):
         """
         Add parameter to packages' library.
@@ -1110,24 +1163,6 @@ class Controller(object):
             Controller.data_changed()
             return param_dialog.data
         return None
-
-    @staticmethod
-    def remove_parameter(package, library, parameter):
-        """
-        Remove parameter from packages' library.
-
-        :type package: str
-        :type library: str
-        :type parameter: str
-        :param package:
-        :param library:
-        :param parameter:
-        """
-        # get library data
-        library_data = Controller.get_library_data(package=package, library=library)
-        for param_data in library_data['params']:
-            if param_data['name'] == parameter:
-                library_data['params'].remove(param_data)
 
     @staticmethod
     def add_basic_communication(package, library):
@@ -1236,10 +1271,80 @@ class Controller(object):
         return function_data
 
     @staticmethod
+    def remove_roslab_package(package):
+        package_list = list(Controller._workspace_data['roslab'])
+        for package_data in package_list:
+            if package_data['name'] == package:
+                package_list.remove(package_data)
+
+    @staticmethod
+    def remove_library(package, library):
+        # get package data
+        """
+        Remove library from package.
+
+        :param package:
+        :param library:
+        """
+        package_data = Controller.get_package_data(package)
+        for library_data in package_data['libraries']:
+            if library_data['name'] == library:
+                list(package_data['libraries']).remove(library_data)
+
+    @staticmethod
+    def remove_node(package, node):
+        # get package data
+        """
+        Remove node from package.
+
+        :param package:
+        :param node:
+        """
+        package_data = Controller.get_package_data(package)
+        for node_data in package_data['nodes']:
+            if node_data['name'] == node:
+                list(package_data['nodes']).remove(node_data)
+
+    @staticmethod
+    def remove_import(package, library, module, include=None):
+        # get library data
+        """
+        Remove module/class-import from packages' library.
+
+        :param package:
+        :param library:
+        :param module:
+        :param include:
+        """
+        library_data = Controller.get_library_data(package=package, library=library)
+        # TODO: implement me!
+
+    @staticmethod
+    def remove_parameter(package, library, parameter):
+        """
+        Remove parameter from packages' library.
+
+        :type package: str
+        :type library: str
+        :type parameter: str
+        :param package:
+        :param library:
+        :param parameter:
+        """
+        # get library data
+        library_data = Controller.get_library_data(package=package, library=library)
+        for param_data in library_data['params']:
+            if param_data['name'] == parameter:
+                library_data['params'].remove(param_data)
+
+    @staticmethod
     def preview_library(package, library):
         library_data = Controller.get_library_data(package=package, library=library)
+        # start = time.time()
         backend = PyBackend(library_data['name'], data=library_data)
         g.preview_widget.setText(backend.generate())
+        # elapsed = (time.time() - start)
+        # print('previewing {} from {}... generated in {}'.format(library, package, elapsed))
 
     @staticmethod
     def get_package_data(package):
@@ -1281,27 +1386,34 @@ class Controller(object):
     def generate_package(package):
         package_data = Controller.get_package_data(package)
         package_path = os.path.join(Controller._workspace_path, 'src', package)
+        print 'Generating {} in {}'.format(package, package_path)
         # update package.xml
+        print('Generating package.xml...')
         package_xml = file(os.path.join(package_path, 'package.xml'), 'w+')
         package_xml.write(PackageXmlGenerator(package, build_depends=package_data['dependencies'],
                           run_depends=package_data['dependencies']).generate())
         package_xml.flush()
         package_xml.close()
+        print('...done')
         # update CMakeLists.txt
         python_setup = False
         if len(package_data['libraries']):
             python_setup = True
+        print('Generating CMakeLists.txt...')
         cmakelists_txt = file(os.path.join(package_path, 'CMakeLists.txt'), 'w+')
         cmakelists_txt.write(CMakeListsTxtGenerator(package, catkin_depends=package_data['dependencies'],
                              python_setup=python_setup, python_scripts=package_data['nodes']).generate())
         cmakelists_txt.flush()
         cmakelists_txt.close()
+        print('...done')
         # update setup.py if needed
         if len(package_data['libraries']):
+            print('Generating setup.py...')
             setup_py = file(os.path.join(package_path, 'setup.py'), 'w+')
             setup_py.write(SetupPyGenerator(package, requirements=package_data['dependencies']).generate())
             setup_py.flush()
             setup_py.close()
+            print('...done')
             # generate libraries
             if not os.path.exists(os.path.join(package_path, 'src')):
                 os.mkdir(os.path.join(package_path, 'src'))
@@ -1309,20 +1421,27 @@ class Controller(object):
                 os.mkdir(os.path.join(package_path, 'src', package))
             open(os.path.join(package_path, 'src', package, '__init__.py'), 'w+')
             for library_data in package_data['libraries']:
+                print('Generating library {}...'.format(library_data['name']))
                 library_file = file(os.path.join(package_path, 'src', package, '{}.py'.format(library_data['name'])),
                                     'w+')
                 library_file.write(PyBackend(library_data['name'], data=library_data).generate())
                 library_file.flush()
                 library_file.close()
+                print('...done')
         # generate nodes
         if len(package_data['nodes']):
             if not os.path.exists(os.path.join(package_path, 'scripts')):
                 os.mkdir(os.path.join(package_path, 'scripts'))
             for node_data in package_data['nodes']:
+                print('Generating {}_node for library {}...'.format(node_data['name'], node_data['library']))
                 node_path = os.path.join(package_path, 'scripts', '{}_node'.format(node_data['name']))
                 node_file = file(node_path, 'w+')
-                node_file.write(PyBackend.generate_node(node_data['name'], package, node_data))
+                node_file.write(PyBackend.generate_node(node_data['name'], package, node_data['library']))
                 node_file.flush()
                 node_file.close()
+                print('...done')
+                print('Mark {}_node as executable...'.format(node_data['name']))
                 node_stat = os.stat(node_path)
                 os.chmod(node_path, node_stat.st_mode | stat.S_IEXEC)
+                print('...done')
+        print('Successfully generated package: {}'.format(package))

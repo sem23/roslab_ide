@@ -125,7 +125,8 @@ class MainWindow(QMainWindow):
                         window_title_exists = True
                 if not window_title_exists:
                     function_data = Controller.get_function_data(package, library, function)
-                    editor = PyFunctionEditor(function_data=function_data, parent=self)
+                    editor = PyFunctionEditor(function_data=function_data, package=package,
+                                              library=library, parent=self)
                     self.ui.editorTabWidget.addTab(editor, window_title)
 
     def show_workspace_item_context_menu(self):

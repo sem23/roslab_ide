@@ -45,6 +45,32 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+      <property name="font">
+       <font>
+        <family>DejaVu Sans Mono</family>
+       </font>
+      </property>
+      <property name="documentTitle">
+       <string/>
+      </property>
+      <property name="undoRedoEnabled">
+       <bool>false</bool>
+      </property>
+      <property name="lineWrapMode">
+       <enum>QPlainTextEdit::NoWrap</enum>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+      <property name="textInteractionFlags">
+       <set>Qt::TextSelectableByMouse</set>
+      </property>
+      <property name="backgroundVisible">
+       <bool>false</bool>
+      </property>
+      <property name="centerOnScroll">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
     <item row="0" column="0" rowspan="2">
@@ -143,8 +169,8 @@
     </property>
     <addaction name="actionStart_roscore"/>
    </widget>
-   <addaction name="menuWindows"/>
    <addaction name="menuROS"/>
+   <addaction name="menuWindows"/>
   </widget>
   <action name="actionSettings">
    <property name="text">
