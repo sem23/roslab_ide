@@ -46,7 +46,7 @@ This tutorial is a pendant to the common ROS publisher / subscriber tutorials.
 r = rospy.Rate(1.0)
 self._chatter_msg.data = 'Hello World!'
 while not rospy.is_shutdown():
-    self._chatter_pub.publish(self._chatter)
+    self._chatter_pub.publish(self._chatter_msg)
     print 'I said:' self._chatter_msg.data
     r.sleep()
 ```
