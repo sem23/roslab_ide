@@ -318,23 +318,12 @@ class PyBackend():
         cleaned_topic = clean_topic(topic)
         # add required import
         self.add_import(module + '.msg', msg_class)
-        # check if callback is set, otherwise construct standard callback
-        # if not callback:
-        #     cb = '{0}_cb'.format(cleaned_topic)
-        #     # setup callback function
-        #     cb_function = [
-        #         'def {0}_cb(self, {0}):'.format(cleaned_topic),
-        #         'self.{0} = {0}'.format(cleaned_topic)
-        #     ]
-        #     self.add_function(cb_function)
-        # setup subscriber initializer
         self._sub_init.append("rospy.Subscriber('{0}', {1}, self.{2}, queue_size=10)".format(
             topic, msg_class, callback))
         # add subscribed data to class initials
         self._class_initials.append('self.{0}_msg = {1}()'.format(cleaned_topic, msg_class))
 
-    def add_service_server(self, msg_type, topic, cb=None):
-        # TODO: fixme!
+    def add_service_server(self, msg_type, topic, callback):
         # get module and class from msg type
         [module, msg_class] = msg_type.split('/')
         # clean topic
@@ -342,21 +331,11 @@ class PyBackend():
         # add required imports
         self.add_import(module + '.srv', msg_class)
         self.add_import(module + '.srv', msg_class + 'Response')
-        # check if callback is set, otherwise construct standard callback
-        if not cb:
-            cb = '{0}_cb'.format(cleaned_topic)
-            cb_function = [
-                'def {0}_cb(self, {0}_req):'.format(cleaned_topic),
-                '{0}_res = {1}Response()'.format(cleaned_topic),
-                'return {0}_res'.format(cleaned_topic)
-            ]
-            self.add_function(cb_function)
         # setup service server initializer
         self._ss_init.append("self.{3}_ss = rospy.Service('{0}', {1}, self.{2})".format(
-            topic, msg_class, cb, cleaned_topic))
+            topic, msg_class, callback, cleaned_topic))
 
     def add_service_client(self, msg_type, topic):
-        # TODO: fixme!
         # get module and class from msg type
         [module, msg_class] = msg_type.split('/')
         # clean topic

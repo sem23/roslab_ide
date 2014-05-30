@@ -70,7 +70,7 @@ class CommunicationDialog(QDialog):
             self.comm = 'sub'
             # add callback name for subscriber
             suffix = 'msg'
-            callback = '{0}_cb'.format(cleaned_topic)
+            callback = '{0}_callback'.format(cleaned_topic)
             self.data['callback'] = callback
             self.callback_data = {
                 'name': callback,
@@ -81,7 +81,7 @@ class CommunicationDialog(QDialog):
             self.comm = 'ss'
             suffix = 'req'
             # add callback name for subscriber
-            callback = '{0}_cb'.format(cleaned_topic)
+            callback = '{0}_callback'.format(cleaned_topic)
             self.data['callback'] = callback
             self.callback_data = {
                 'name': callback,

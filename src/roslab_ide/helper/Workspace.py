@@ -647,9 +647,10 @@ class LibraryItem(TreeItem):
 
     def function_items(self):
         function_items = []
-        count = self._functions_item.childCount()
-        for i in range(count):
-            function_items.append(self._functions_item.child(i))
+        if self._functions_item:
+            count = self._functions_item.childCount()
+            for i in range(count):
+                function_items.append(self._functions_item.child(i))
         return function_items
 
     def package_name(self):
