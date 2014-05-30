@@ -383,11 +383,9 @@ class LibraryItem(TreeItem):
 
         # set parent package name
         self._package_name = package_name
-        self._function_items = []
-        self._tf_item = None
-        self._tf_items = []
         self._comm_item = None
-        self._comm_items = []
+        self._functions_item = None
+        self._tf_item = None
 
         # mod actions
         # add actions
@@ -465,6 +463,7 @@ class LibraryItem(TreeItem):
                     for entry in data['tf']['listener']:
                         self.add_tf_listener_item(data=entry)
             if 'functions' in data:
+                self._functions_item = FunctionsItem(parent=self)
                 for entry in data['functions']:
                     self.add_function_item(data=entry)
 
@@ -497,6 +496,9 @@ class LibraryItem(TreeItem):
         if not self._comm_item:
             self._comm_item = CommunicationsItem(parent=self)
         item = TreeItem(parent=self._comm_item, data=data)
+        # update communications count
+        self._comm_item.setText(1, str(self._comm_item.childCount()))
+        # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_out.png')))
         # set info
         item.setToolTip(0, 'Publisher')
@@ -511,6 +513,9 @@ class LibraryItem(TreeItem):
         if not self._comm_item:
             self._comm_item = CommunicationsItem(parent=self)
         item = TreeItem(parent=self._comm_item, data=data)
+        # update communications count
+        self._comm_item.setText(1, str(self._comm_item.childCount()))
+        # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_in.png')))
         # set info
         item.setToolTip(0, 'Subscriber')
@@ -525,6 +530,9 @@ class LibraryItem(TreeItem):
         if not self._comm_item:
             self._comm_item = CommunicationsItem(parent=self)
         item = TreeItem(parent=self._comm_item, key='service server', data=data)
+        # update communications count
+        self._comm_item.setText(1, str(self._comm_item.childCount()))
+        # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Service Server')
@@ -539,6 +547,9 @@ class LibraryItem(TreeItem):
         if not self._comm_item:
             self._comm_item = CommunicationsItem(parent=self)
         item = TreeItem(parent=self._comm_item, key='service client', data=data)
+        # update communications count
+        self._comm_item.setText(1, str(self._comm_item.childCount()))
+        # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Service Client')
@@ -553,6 +564,9 @@ class LibraryItem(TreeItem):
         if not self._comm_item:
             self._comm_item = CommunicationsItem(parent=self)
         item = TreeItem(parent=self._comm_item, key='action server', data=data)
+        # update communications count
+        self._comm_item.setText(1, str(self._comm_item.childCount()))
+        # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Action Server')
@@ -567,6 +581,9 @@ class LibraryItem(TreeItem):
         if not self._comm_item:
             self._comm_item = CommunicationsItem(parent=self)
         item = TreeItem(parent=self._comm_item, key='action client', data=data)
+        # update communications count
+        self._comm_item.setText(1, str(self._comm_item.childCount()))
+        # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Action Client')
@@ -581,6 +598,9 @@ class LibraryItem(TreeItem):
         if not self._comm_item:
             self._comm_item = CommunicationsItem(parent=self)
         item = TreeItem(parent=self._comm_item, key='simple action server', data=data)
+        # update communications count
+        self._comm_item.setText(1, str(self._comm_item.childCount()))
+        # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Simple Action Server')
@@ -595,6 +615,9 @@ class LibraryItem(TreeItem):
         if not self._comm_item:
             self._comm_item = CommunicationsItem(parent=self)
         item = TreeItem(parent=self._comm_item, key='simple action client', data=data)
+        # update communications count
+        self._comm_item.setText(1, str(self._comm_item.childCount()))
+        # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Simple Action Client')
@@ -616,12 +639,18 @@ class LibraryItem(TreeItem):
         return TfListenerItem(parent=self._tf_item, data=data)
 
     def add_function_item(self, data):
-        function_item = FunctionItem(parent=self, data=data)
-        self._function_items.append(function_item)
+        if not self._functions_item:
+            self._functions_item = TransformationsItem(parent=self)
+        function_item = FunctionItem(parent=self._functions_item, data=data)
+        self._functions_item.setText(1, str(self._functions_item.childCount()))
         return function_item
 
     def function_items(self):
-        return self._function_items
+        function_items = []
+        count = self._functions_item.childCount()
+        for i in range(count):
+            function_items.append(self._functions_item.child(i))
+        return function_items
 
     def package_name(self):
         return self._package_name
@@ -732,11 +761,11 @@ class CommunicationsItem(TreeItem):
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         self.setToolTip(0, 'Communications')
-        self.setToolTip(1, 'Communications')
+        self.setToolTip(1, 'Communications count')
         self.setStatusTip(0, 'Communications')
-        self.setStatusTip(1, 'Communications')
+        self.setStatusTip(1, 'Communications count')
         self.setWhatsThis(0, 'Communications')
-        self.setWhatsThis(1, 'Communications')
+        self.setWhatsThis(1, 'Communications count')
 
 
 class TfListenerItem(TreeItem):
@@ -775,6 +804,22 @@ class TfBroadcasterItem(TreeItem):
 
         # set item value from data
         self.setText(1, '{0} -> {1}'.format(data['parent_frame'], data['child_frame']))
+
+
+class FunctionsItem(TreeItem):
+
+    def __init__(self, parent):
+        TreeItem.__init__(self, parent=parent)
+
+        # set icon
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'functions.png')))
+        # set info
+        self.setToolTip(0, 'Functions')
+        self.setToolTip(1, 'Functions count')
+        self.setStatusTip(0, 'Functions')
+        self.setStatusTip(1, 'Functions count')
+        self.setWhatsThis(0, 'Functions')
+        self.setWhatsThis(1, 'Functions count')
 
 
 class FunctionItem(TreeItem):
