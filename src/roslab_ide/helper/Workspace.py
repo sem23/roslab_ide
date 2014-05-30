@@ -386,6 +386,8 @@ class LibraryItem(TreeItem):
         self._function_items = []
         self._tf_item = None
         self._tf_items = []
+        self._comm_item = None
+        self._comm_items = []
 
         # mod actions
         # add actions
@@ -428,30 +430,32 @@ class LibraryItem(TreeItem):
             if 'param' in data:
                 for entry in data['param']:
                     self.add_parameter_item(data=entry)
-            if 'pub' in data:
-                for entry in data['pub']:
-                    self.add_publisher_item(data=entry)
-            if 'sub' in data:
-                for entry in data['sub']:
-                    self.add_subscriber_item(data=entry)
-            if 'ss' in data:
-                for entry in data['ss']:
-                    self.add_service_server_item(data=entry)
-            if 'sc' in data:
-                for entry in data['sc']:
-                    self.add_service_client_item(data=entry)
-            if 'as' in data:
-                for entry in data['as']:
-                    self.add_action_server_item(data=entry)
-            if 'ac' in data:
-                for entry in data['ac']:
-                    self.add_action_client_item(data=entry)
-            if 'sas' in data:
-                for entry in data['sas']:
-                    self.add_simple_action_server_item(data=entry)
-            if 'sac' in data:
-                for entry in data['sac']:
-                    self.add_simple_action_client_item(data=entry)
+            if 'comm' in data:
+                self._comm_item = CommunicationsItem(parent=self)
+                if 'pub' in data['comm']:
+                    for entry in data['comm']['pub']:
+                        self.add_publisher_item(data=entry)
+                if 'sub' in data['comm']:
+                    for entry in data['comm']['sub']:
+                        self.add_subscriber_item(data=entry)
+                if 'ss' in data['comm']:
+                    for entry in data['comm']['ss']:
+                        self.add_service_server_item(data=entry)
+                if 'sc' in data['comm']:
+                    for entry in data['comm']['sc']:
+                        self.add_service_client_item(data=entry)
+                if 'as' in data['comm']:
+                    for entry in data['comm']['as']:
+                        self.add_action_server_item(data=entry)
+                if 'ac' in data['comm']:
+                    for entry in data['comm']['ac']:
+                        self.add_action_client_item(data=entry)
+                if 'sas' in data['comm']:
+                    for entry in data['comm']['sas']:
+                        self.add_simple_action_server_item(data=entry)
+                if 'sac' in data['comm']:
+                    for entry in data['comm']['sac']:
+                        self.add_simple_action_client_item(data=entry)
             if 'tf' in data:
                 self._tf_item = TransformationsItem(parent=self)
                 if 'broadcaster' in data['tf']:
@@ -490,7 +494,9 @@ class LibraryItem(TreeItem):
         return item
 
     def add_publisher_item(self, data):
-        item = TreeItem(parent=self, data=data)
+        if not self._comm_item:
+            self._comm_item = CommunicationsItem(parent=self)
+        item = TreeItem(parent=self._comm_item, data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_out.png')))
         # set info
         item.setToolTip(0, 'Publisher')
@@ -502,7 +508,9 @@ class LibraryItem(TreeItem):
         return item
 
     def add_subscriber_item(self, data):
-        item = TreeItem(parent=self, data=data)
+        if not self._comm_item:
+            self._comm_item = CommunicationsItem(parent=self)
+        item = TreeItem(parent=self._comm_item, data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_in.png')))
         # set info
         item.setToolTip(0, 'Subscriber')
@@ -514,7 +522,9 @@ class LibraryItem(TreeItem):
         return item
 
     def add_service_server_item(self, data):
-        item = TreeItem(parent=self, key='service server', data=data)
+        if not self._comm_item:
+            self._comm_item = CommunicationsItem(parent=self)
+        item = TreeItem(parent=self._comm_item, key='service server', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Service Server')
@@ -526,7 +536,9 @@ class LibraryItem(TreeItem):
         return item
 
     def add_service_client_item(self, data):
-        item = TreeItem(parent=self, key='service client', data=data)
+        if not self._comm_item:
+            self._comm_item = CommunicationsItem(parent=self)
+        item = TreeItem(parent=self._comm_item, key='service client', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Service Client')
@@ -538,7 +550,9 @@ class LibraryItem(TreeItem):
         return item
 
     def add_action_server_item(self, data):
-        item = TreeItem(parent=self, key='action server', data=data)
+        if not self._comm_item:
+            self._comm_item = CommunicationsItem(parent=self)
+        item = TreeItem(parent=self._comm_item, key='action server', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Action Server')
@@ -550,7 +564,9 @@ class LibraryItem(TreeItem):
         return item
 
     def add_action_client_item(self, data):
-        item = TreeItem(parent=self, key='action client', data=data)
+        if not self._comm_item:
+            self._comm_item = CommunicationsItem(parent=self)
+        item = TreeItem(parent=self._comm_item, key='action client', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Action Client')
@@ -562,7 +578,9 @@ class LibraryItem(TreeItem):
         return item
 
     def add_simple_action_server_item(self, data):
-        item = TreeItem(parent=self, key='simple action server', data=data)
+        if not self._comm_item:
+            self._comm_item = CommunicationsItem(parent=self)
+        item = TreeItem(parent=self._comm_item, key='simple action server', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Simple Action Server')
@@ -574,7 +592,9 @@ class LibraryItem(TreeItem):
         return item
 
     def add_simple_action_client_item(self, data):
-        item = TreeItem(parent=self, key='simple action client', data=data)
+        if not self._comm_item:
+            self._comm_item = CommunicationsItem(parent=self)
+        item = TreeItem(parent=self._comm_item, key='simple action client', data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
         item.setToolTip(0, 'Simple Action Client')
@@ -701,6 +721,22 @@ class TransformationsItem(TreeItem):
         self.setStatusTip(1, 'Transformations')
         self.setWhatsThis(0, 'Transformations')
         self.setWhatsThis(1, 'Transformations')
+
+
+class CommunicationsItem(TreeItem):
+
+    def __init__(self, parent):
+        TreeItem.__init__(self, parent=parent)
+
+        # set icon
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
+        # set info
+        self.setToolTip(0, 'Communications')
+        self.setToolTip(1, 'Communications')
+        self.setStatusTip(0, 'Communications')
+        self.setStatusTip(1, 'Communications')
+        self.setWhatsThis(0, 'Communications')
+        self.setWhatsThis(1, 'Communications')
 
 
 class TfListenerItem(TreeItem):
@@ -903,7 +939,7 @@ class Controller(object):
                 package_type = package.keys()[0]
                 package_data = {
                     'name': package[package_type]['local-name'],
-                    'cvs': package_type,
+                    'vcs': package_type,
                     'uri': package[package_type]['uri'],
                     'version': package[package_type]['version']
                 }
@@ -1184,10 +1220,12 @@ class Controller(object):
         library_data = Controller.get_library_data(package=package, library=library)
         comm_dialog = CommunicationDialog(parent=g.main_widget)
         if comm_dialog.exec_() == QDialog.Accepted:
+            if 'comm' not in library_data:
+                library_data['comm'] = {}
             # check if communication list exists in library, otherwise create it
-            if comm_dialog.comm not in library_data:
-                library_data[comm_dialog.comm] = []
-            library_data[comm_dialog.comm].append(comm_dialog.data)
+            if comm_dialog.comm not in library_data['comm']:
+                library_data['comm'][comm_dialog.comm] = []
+            library_data['comm'][comm_dialog.comm].append(comm_dialog.data)
             Controller.data_changed()
             # check if communication has callback data
             if comm_dialog.callback_data:

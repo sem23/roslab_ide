@@ -173,7 +173,8 @@ class PyBackend():
         if 'param' in data:
             self.parse_parameters(data['param'])
         # comms
-        self.parse_communications(data)
+        if 'comm' in data:
+            self.parse_communications(data['comm'])
         # transforms
         if 'tf' in data:
             self.parse_transforms(data['tf'])
