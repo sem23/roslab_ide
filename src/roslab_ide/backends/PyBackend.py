@@ -308,7 +308,7 @@ class PyBackend():
         self._pub_init.append("self.{2}_pub = rospy.Publisher('{0}', {1}, queue_size=10)".format(
             topic, msg_class, cleaned_topic))
         # add published data to class initials
-        self._class_initials.append('self.{0} = {1}()'.format(cleaned_topic, msg_class))
+        self._class_initials.append('self.{0}_msg = {1}()'.format(cleaned_topic, msg_class))
 
     def add_subscriber(self, msg_type, topic, callback):
         # get module and class from msg type
@@ -330,7 +330,7 @@ class PyBackend():
         self._sub_init.append("rospy.Subscriber('{0}', {1}, self.{2}, queue_size=10)".format(
             topic, msg_class, callback))
         # add subscribed data to class initials
-        self._class_initials.append('self.{0} = {1}()'.format(cleaned_topic, msg_class))
+        self._class_initials.append('self.{0}_msg = {1}()'.format(cleaned_topic, msg_class))
 
     def add_service_server(self, msg_type, topic, cb=None):
         # TODO: fixme!
