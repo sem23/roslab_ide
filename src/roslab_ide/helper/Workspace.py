@@ -729,12 +729,22 @@ class NodeItem(TreeItem):
         start_action = QAction('start', None)
         start_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'konsole1.png')))
         start_action.triggered.connect(self.start)
-        self._mod_actions = [start_action]
+        start_with_args_action = QAction('start with args', None)
+        start_with_args_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'konsole1.png')))
+        start_with_args_action.triggered.connect(self.start_with_args)
+        self._mod_actions = [
+            start_action,
+            start_with_args_action
+        ]
         # add actions
 
     @pyqtSlot()
     def start(self):
         Controller.start_node(self._package_name, self._name)
+
+    @pyqtSlot()
+    def start_with_args(self):
+        Controller.start_node_with_args(self._package_name, self._name)
 
 
 class TransformationsItem(TreeItem):
@@ -1094,6 +1104,21 @@ class Controller(object):
         :param node:
         """
         ROSCommand.rosrun(package, node)
+
+    @staticmethod
+    def start_node_with_args(package, node):
+        """
+        Start node from package with arguments. Rosrun will be called in external process.
+
+        :param package:
+        :param node:
+        """
+        # get command line arguments
+        args, ok = QInputDialog.getText(Controller._parent_widget, 'Start node with command line args', 'args:')
+        args = str(args)
+        if not ok or args == '':
+            return
+        ROSCommand.rosrun(package, node, args)
 
     @staticmethod
     def add_dependency(package):

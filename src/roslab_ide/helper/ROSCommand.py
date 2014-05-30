@@ -14,8 +14,11 @@ class ROSCommand():
         ROSCommand.execute(command)
 
     @staticmethod
-    def rosrun(package, node):
-        command = 'rosrun {0} {1}_node'.format(package, node)
+    def rosrun(package, node, args=None):
+        if args:
+            command = 'rosrun {0} {1}_node {2}'.format(package, node, args)
+        else:
+            command = 'rosrun {0} {1}_node'.format(package, node)
         ROSCommand.execute(command)
 
     @staticmethod
