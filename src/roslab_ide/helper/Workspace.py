@@ -1138,6 +1138,8 @@ class Controller(object):
                 library_data['import'] = []
             library_data['import'].append(import_dialog.data)
             Controller.data_changed()
+            # update preview
+            Controller.preview_library(package=package, library=library)
             return import_dialog.data
         return None
 
@@ -1160,7 +1162,10 @@ class Controller(object):
             if 'param' not in library_data:
                 library_data['param'] = []
             library_data['param'].append(param_dialog.data)
+            # mark workspace data changed
             Controller.data_changed()
+            # update preview
+            Controller.preview_library(package=package, library=library)
             return param_dialog.data
         return None
 
@@ -1190,6 +1195,8 @@ class Controller(object):
                 if 'functions' not in library_data:
                     library_data['functions'] = []
                 library_data['functions'].append(comm_dialog.callback_data)
+            # update preview
+            Controller.preview_library(package=package, library=library)
             return comm_dialog.comm, comm_dialog.data, comm_dialog.callback_data
         return None, None, None
 
@@ -1217,6 +1224,8 @@ class Controller(object):
         if 'listener' not in library_data['tf']:
             library_data['tf']['listener'] = []
         library_data['tf']['listener'].append(tf_data)
+        # update preview
+        Controller.preview_library(package=package, library=library)
         return tf_data
 
     @staticmethod
@@ -1238,6 +1247,8 @@ class Controller(object):
         if 'broadcaster' not in library_data['tf']:
             library_data['tf']['broadcaster'] = []
         library_data['tf']['broadcaster'].append(tf_data)
+        # update preview
+        Controller.preview_library(package=package, library=library)
         return tf_data
 
     @staticmethod
@@ -1267,6 +1278,8 @@ class Controller(object):
         library_data['functions'].append(function_data)
         # mark changed
         Controller.data_changed()
+        # update preview
+        Controller.preview_library(package=package, library=library)
         # return created data
         return function_data
 
