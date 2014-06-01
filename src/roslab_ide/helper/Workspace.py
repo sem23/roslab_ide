@@ -878,6 +878,9 @@ class FunctionItem(TreeItem):
         self.setWhatsThis(0, 'Function (class method)')
         self.setWhatsThis(1, 'Function name')
 
+        # vars
+        self._args = ['self']
+
         # setup data
         if data:
             if 'args' in data:
@@ -885,7 +888,11 @@ class FunctionItem(TreeItem):
                     self.add_argument_item(data=arg)
 
     def add_argument_item(self, data):
+        self._args.append(data['name'])
         return TreeItem(parent=self, type=g.FUNCTION_ARGUMENT_ITEM, key='argument', data=data)
+
+    def args(self):
+        return self._args
 
 
 class StateMachineItem(TreeItem):

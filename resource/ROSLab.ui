@@ -33,7 +33,7 @@
        <bool>true</bool>
       </property>
       <property name="styleSheet">
-       <string notr="true">QTabBar::tab { height: 30px; } </string>
+       <string notr="true">QTabBar::tab { height: 40px; } </string>
       </property>
       <property name="currentIndex">
        <number>-1</number>

@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
         # setup user interface
         ui_file = os.path.join(rp.get_path('roslab_ide'), 'resource', 'ROSLab.ui')
         self.ui = loadUi(ui_file, self)
+        self.ui.editorTabWidget.tabCloseRequested.connect(self.close_editor_tab)
         self.ui.previewTextEdit = PyEditor()
         self.ui.editorLayout = QGridLayout(self.ui.editorFrame).addWidget(self.ui.previewTextEdit)
         self.ui.workspaceTreeWidget.setSortingEnabled(True)
@@ -117,7 +118,13 @@ class MainWindow(QMainWindow):
                 package = current_item.package_name()
                 library = current_item.name()
                 function = function_item.name()
-                window_title = '{0}\n-Function: {1}'.format(library, function)
+                args = function_item.args()
+                # TODO: make tab widgets tab bar nicer!
+                window_title = (
+                    'Library: {}\n'.format(library) +
+                    'Function: {}\n'.format(function) +
+                    'Arguments: {}'.format(', '.join(args))
+                )
                 window_title_exists = False
                 # check if function is already opened
                 for page in range(self.ui.editorTabWidget.count()):
@@ -127,13 +134,14 @@ class MainWindow(QMainWindow):
                     function_data = Controller.get_function_data(package, library, function)
                     editor = PyFunctionEditor(function_data=function_data, package=package,
                                               library=library, parent=self)
-                    self.ui.editorTabWidget.addTab(editor, window_title)
+                    self.ui.editorTabWidget.addTab(editor, QIcon(os.path.join(
+                        rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')), window_title)
         if item_type == g.STATE_MACHINE_ITEM:
             package = current_item.package_name()
             library = current_item.library_name()
             machine = current_item.name()
             Controller.visualize_state_machine(package, library, machine)
-            window_title = '{0}\n-Machine: {1}'.format(library, machine)
+            window_title = 'Library: {0}\nMachine: {1}'.format(library, machine)
             window_title_exists = False
             # check if function is already opened
             for page in range(self.ui.editorTabWidget.count()):
@@ -143,7 +151,13 @@ class MainWindow(QMainWindow):
                 graph_png = QImage('/tmp/fsm.png')
                 graph_widget = QLabel()
                 graph_widget.setPixmap(QPixmap.fromImage(graph_png))
-                self.ui.editorTabWidget.addTab(graph_widget, window_title)
+                self.ui.editorTabWidget.addTab(graph_widget, QIcon(os.path.join(
+                    rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')), window_title)
+
+    def close_editor_tab(self, index):
+        tab_widget = self.ui.editorTabWidget.widget(index)
+        self.ui.editorTabWidget.removeTab(index)
+        del tab_widget
 
     def show_workspace_item_context_menu(self):
         current_item = self.ui.workspaceTreeWidget.currentItem()
