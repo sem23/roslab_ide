@@ -2,7 +2,6 @@ from __future__ import print_function
 
 __author__ = 'privat'
 
-import pygraphviz
 import collections
 
 from operator import itemgetter
@@ -26,11 +25,19 @@ from roslab_ide.helper.globals import clean_topic
 #     feedback_cb: 'name'                               # optional for s-ac
 # tf:
 #   broadcast:                                          # lists
-#   - parent: 'parent_frame'
-#     child: 'child_frame'
+#   - parent_frame: 'parent_frame'
+#     child_frame: 'child_frame'
 #   listen:                                             # lists
-#   - parent: 'parent_frame'
-#     child: 'child_frame'
+#   - parent_frame: 'parent_frame'
+#     child_frame: 'child_frame'
+# fsm:
+# - name: str
+#   start_state: str
+#   states:
+#   - name: str
+#     handler: str
+#     trans:                                            # IDE/editor should parse functions return value to acquire
+#     - state: str                                      # state transitions
 # function:
 # - name: str
 #   args:
@@ -73,14 +80,19 @@ class PyBackend():
         self._functions = []
         self._add_init = []
 
-        self._fsm_init = ''
+        self._fsm_init = []
         self._fsm_states = []
-        self._fsm_start_state = ''
 
         self._run_function = []
         self._run_rate = None
 
+        # graph viz
+        self._fsm_graphs = []
+
         self.load_from_data(data)
+
+    def fsm_graphs(self):
+        return self._fsm_graphs
 
     def parse_imports(self, imports):
         """
@@ -146,6 +158,21 @@ class PyBackend():
                 for tf_listener in tfs:
                     self.add_tf_listener(**tf_listener)
 
+    def parse_fsm(self, fsm):
+        # add state machine to generated code
+        """
+        Parse finite state machines data in form:
+        [{states: [{handler: str, end_state: bool, transitions: [str]}], begin_state: str}]
+
+        :type fsm: list-of-dicts
+        :param fsm:
+        :rtype : object
+        """
+        for machine in fsm:
+            name = machine['name']
+            start_state = machine['start_state']
+            self.add_fsm(name=name, start_state=start_state, states=machine['states'])
+
     def parse_functions(self, functions):
         """
         Parse functions in form [{name: {args : {name: 'str'} , code : 'str'}].
@@ -180,114 +207,90 @@ class PyBackend():
             self.parse_transforms(data['tf'])
         if 'functions' in data:
             self.parse_functions(data['functions'])
-        if 'use_fsm' in data:
-            use_fsm = data['use_fsm']
-        else:
-            use_fsm = None
-        if 'run_rate' in data:
-            run_rate = data['run_rate']
-        else:
-            if use_fsm:
-                run_rate = 1
+        if 'fsm' in data:
+            self.parse_fsm(data['fsm'])
+
+        # if use_fsm:
+        #     i = 0
+        #     graph = pygraphviz.AGraph(directed=True)
+        #     graph.add_node('done', color='red', shape='house')
+        #     self.add_fsm(run_rate)
+        #     for state in data['states']:
+        #         if 'name' in state:
+        #             name = state['name']
+        #         else:
+        #             i += 1
+        #             name = 'unknown_state_' + i
+        #         if graph.has_node(name):
+        #             node = graph.get_node(name)
+        #             node.attr['color'] = 'blue'
+        #             node.attr['shape'] = 'rect'
+        #         else:
+        #             graph.add_node(name, color='blue', shape='rect')
+        #         if 'handler' in state:
+        #             handler = state['handler']
+        #         else:
+        #             handler = name.replace(' ', '_') + '_state_handler'
+        #             self.add_fsm_state_handler(
+        #                 'def ' + handler + '(self, cargo):\n'
+        #                 '    # TODO: implement state handler!\n'
+        #                 "    return 'newState', cargo"
+        #             )
+        #         if 'end_state' in state:
+        #             end_state = state['end_state']
+        #         else:
+        #             end_state = False
+        #         if end_state:
+        #             node = graph.get_node(name)
+        #             node.attr['color'] = 'red'
+        #             node.attr['shape'] = 'house'
+        #         if 'trans' in state:
+        #             for transition in state['trans']:
+        #                 graph.add_edge(name, transition['name'],
+        #                                label=transition['condition'],
+        #                                fontsize=10)
+        #         else:
+        #             # TODO: implement warning for incorrect graph
+        #             pass
+        #         self.add_fsm_state(name=name, handler=handler, end_state=end_state)
+        #     if 'start_state' in data:
+        #         start_state = data['start_state']
+        #         node = graph.get_node(start_state)
+        #         node.attr['color'] = 'green'
+        #         node.attr['shape'] = 'invhouse'
+        #         self.set_fsm_start_state(start_state)
+        #     # graph.layout()
+        #     graph.layout(prog='dot')
+        #     # graph.layout(prog='sfdp')
+        #     # graph.layout(prog='twopi')
+        #     # graph.layout(prog='circo')
+        #     # graph.layout(prog='fdp')
+        #     graph.draw(self._name.lower() + '_fsm_graph.png')
+        # else:
+        if not self._has_run:
+            self._run_function.append('@staticmethod\n    def run():')
+            self._run_function.append('rospy.spin()')
+
+    def add_fsm(self, name, start_state, states):
+        self.add_import('roslab_ide.fsm', 'FiniteStateMachine')
+        self._fsm_init.append('self._{}_fsm = FiniteStateMachine()'.format(name))
+        self._fsm_init.append("self._{}_fsm.set_start('{}')".format(name, start_state))
+        # states
+        for state in states:
+            state_name = state['name']
+            if 'handler' in state:
+                # normal state
+                self.add_fsm_state(name, state_name=state_name, handler=state['handler'])
+
             else:
-                run_rate = None
+                # end state
+                self.add_fsm_state(name, state_name=state_name)
 
-        if use_fsm:
-            i = 0
-            graph = pygraphviz.AGraph(directed=True)
-            graph.add_node('done', color='red', shape='house')
-            self.add_fsm(run_rate)
-            for state in data['states']:
-                if 'name' in state:
-                    name = state['name']
-                else:
-                    i += 1
-                    name = 'unknown_state_' + i
-                if graph.has_node(name):
-                    node = graph.get_node(name)
-                    node.attr['color'] = 'blue'
-                    node.attr['shape'] = 'rect'
-                else:
-                    graph.add_node(name, color='blue', shape='rect')
-                if 'handler' in state:
-                    handler = state['handler']
-                else:
-                    handler = name.replace(' ', '_') + '_state_handler'
-                    self.add_fsm_state_handler(
-                        'def ' + handler + '(self, cargo):\n'
-                        '    # TODO: implement state handler!\n'
-                        "    return 'newState', cargo"
-                    )
-                if 'end_state' in state:
-                    end_state = state['end_state']
-                else:
-                    end_state = False
-                if end_state:
-                    node = graph.get_node(name)
-                    node.attr['color'] = 'red'
-                    node.attr['shape'] = 'house'
-                if 'trans' in state:
-                    for transition in state['trans']:
-                        graph.add_edge(name, transition['name'],
-                                       label=transition['condition'],
-                                       fontsize=10)
-                else:
-                    # TODO: implement warning for incorrect graph
-                    pass
-                self.add_fsm_state(name=name, handler=handler, end_state=end_state)
-            if 'start_state' in data:
-                start_state = data['start_state']
-                node = graph.get_node(start_state)
-                node.attr['color'] = 'green'
-                node.attr['shape'] = 'invhouse'
-                self.set_fsm_start_state(start_state)
-            # graph.layout()
-            graph.layout(prog='dot')
-            # graph.layout(prog='sfdp')
-            # graph.layout(prog='twopi')
-            # graph.layout(prog='circo')
-            # graph.layout(prog='fdp')
-            graph.draw(self._name.lower() + '_fsm_graph.png')
+    def add_fsm_state(self, fsm_name, state_name, handler=None):
+        if not handler:
+            self._fsm_init.append("self._{}_fsm.add_state('{}')".format(fsm_name, state_name))
         else:
-            if not self._has_run:
-                if run_rate:
-                    self._run_function.append('def run(self):')
-                    self.add_parameter('run_rate', run_rate)
-                    self._run_function.append('r = rospy.Rate(self._run_rate)')
-                    self._run_function.append('while not rospy.is_shutdown():')
-                    self._run_function.append('    # TODO: implement run function!')
-                    self._run_function.append('    r.sleep()')
-                else:
-                    self._run_function.append('@staticmethod\n    def run():')
-                    self._run_function.append('rospy.spin()')
-
-    def add_fsm(self, run_rate=None):
-        if self._run_rate is not None:
-            raise RuntimeError('Can not add Finite State Machine! Class already has a run function!')
-        self.add_import('ros_wrapper_generator', 'FiniteStateMachine')
-        self._fsm_init = 'self._fsm = FiniteStateMachine()'
-        self.add_fsm_state('done', handler='None', end_state=True)
-        if run_rate is not None:
-            self._run_rate = run_rate
-            self.add_parameter('run_rate', run_rate)
-            self._run_function = []
-            self._run_function.append('def run(self, cargo=None):')
-            self._run_function.append('self._fsm.run(cargo)')
-
-    def add_fsm_state(self, name, handler='None', end_state=False):
-        if handler is 'None':
-            self._fsm_states.append("self._fsm.add_state('{0}', {1}, end_state={2})".format(
-                name, handler, end_state))
-        else:
-            self._fsm_states.append("self._fsm.add_state('{0}', self.{1}, end_state={2})".format(
-                name, handler, end_state))
-
-    def set_fsm_start_state(self, start_state):
-        self._fsm_start_state = "self._fsm.set_start('{}')".format(start_state)
-
-    def add_fsm_state_handler(self, content):
-        content = content.splitlines()
-        self._functions.append(self.make_intended_block(content))
+            self._fsm_init.append("self._{}_fsm.add_state('{}', self.{})".format(fsm_name, state_name, handler))
 
     def add_parameter(self, name, default=None):
         if default is None:
@@ -473,9 +476,15 @@ class PyBackend():
             # if arg has default value it is optional, otherwise it is required
             if 'default' in arg:
                 default = arg['default']
+                if default == 'None':
+                    default_type = 'None'
+                else:
+                    default_type = arg['default_type']
                 # if type of default is str add necessary quotes, otherwise not
-                if type(default) is str:
+                if default_type == 'str':
                     opt_args.append("{0}='{1}'".format(arg_name, default))
+                elif default_type == 'None':
+                    opt_args.append("{0}=None".format(arg_name))
                 else:
                     opt_args.append("{0}={1}".format(arg_name, default))
             else:
@@ -545,10 +554,8 @@ class PyBackend():
             class_init.append('# parameters')
             class_init.extend(self._param_init)
         if len(self._fsm_init):
-            class_init.append('# finite state machine')
-            class_init.append(self._fsm_init)
-            class_init.extend(self._fsm_states)
-            class_init.append(self._fsm_start_state)
+            class_init.append('# finite state machines')
+            class_init.extend(self._fsm_init)
         if len(self._pub_init):
             class_init.append('# publishers')
             class_init.extend(self._pub_init)

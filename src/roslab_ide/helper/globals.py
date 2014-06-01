@@ -37,9 +37,11 @@ def get_dict_list_entry_by_key_value(list_, key, value):
     if type(list_) is not list:
         raise TypeError('Given list is not from type list!')
     for entry in list_:
-        if entry[key] is value:
+        if entry[key] == value:
             return entry
-    raise TypeError('Entry not found! Check if you are looking in correct list!')
+    raise TypeError('Entry not found! Check if you are looking in correct list!\n' +
+                    'Key/Value: {}/{}\n'.format(key, value) +
+                    'Entries: {}'.format(list_))
 
 
 def check_topic(topic):
@@ -195,11 +197,18 @@ ACTION_SERVER_ITEM = QTreeWidgetItem.UserType + 112
 ACTION_CLIENTS_ITEM = QTreeWidgetItem.UserType + 113
 ACTION_CLIENT_ITEM = QTreeWidgetItem.UserType + 114
 
-FUNCTIONS_ITEM = QTreeWidgetItem.UserType + 115
-FUNCTION_ITEM = QTreeWidgetItem.UserType + 116
+TRANSFORMATIONS_ITEM = QTreeWidgetItem.UserType + 115
+TRANSFORMATION_ITEM = QTreeWidgetItem.UserType + 116
 
-TRANSFORMATIONS_ITEM = QTreeWidgetItem.UserType + 117
-TRANSFORMATION_ITEM = QTreeWidgetItem.UserType + 118
+STATE_MACHINES_ITEM = QTreeWidgetItem.UserType + 120
+STATE_MACHINE_ITEM = QTreeWidgetItem.UserType + 121
+MACHINE_STATES_ITEM = QTreeWidgetItem.UserType + 122
+MACHINE_STATE_ITEM = QTreeWidgetItem.UserType + 123
+STATE_TRANSITIONS_ITEM = QTreeWidgetItem.UserType + 124
+STATE_TRANSITION_ITEM = QTreeWidgetItem.UserType + 125
+
+FUNCTIONS_ITEM = QTreeWidgetItem.UserType + 151
+FUNCTION_ITEM = QTreeWidgetItem.UserType + 152
 
 FUNCTION_ARGUMENT_ITEM = QTreeWidgetItem.UserType + 200
 

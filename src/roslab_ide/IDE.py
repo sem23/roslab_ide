@@ -30,7 +30,7 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from python_qt_binding import loadUi
-from PyQt4.QtGui import QMainWindow, QGridLayout, QIcon, QMessageBox
+from PyQt4.QtGui import QMainWindow, QGridLayout, QIcon, QMessageBox, QLabel, QImage, QPixmap
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtCore import Qt, QSettings, QSize, QPoint
 
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
                 package = current_item.package_name()
                 library = current_item.name()
                 function = function_item.name()
-                window_title = '{0} - {1}'.format(library, function)
+                window_title = '{0}\n-Function: {1}'.format(library, function)
                 window_title_exists = False
                 # check if function is already opened
                 for page in range(self.ui.editorTabWidget.count()):
@@ -128,6 +128,22 @@ class MainWindow(QMainWindow):
                     editor = PyFunctionEditor(function_data=function_data, package=package,
                                               library=library, parent=self)
                     self.ui.editorTabWidget.addTab(editor, window_title)
+        if item_type == g.STATE_MACHINE_ITEM:
+            package = current_item.package_name()
+            library = current_item.library_name()
+            machine = current_item.name()
+            Controller.visualize_state_machine(package, library, machine)
+            window_title = '{0}\n-Machine: {1}'.format(library, machine)
+            window_title_exists = False
+            # check if function is already opened
+            for page in range(self.ui.editorTabWidget.count()):
+                if str(self.ui.editorTabWidget.tabText(page)) == window_title:
+                    window_title_exists = True
+            if not window_title_exists:
+                graph_png = QImage('/tmp/fsm.png')
+                graph_widget = QLabel()
+                graph_widget.setPixmap(QPixmap.fromImage(graph_png))
+                self.ui.editorTabWidget.addTab(graph_widget, window_title)
 
     def show_workspace_item_context_menu(self):
         current_item = self.ui.workspaceTreeWidget.currentItem()

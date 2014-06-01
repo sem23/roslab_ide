@@ -1,9 +1,11 @@
 __author__ = 'privat'
 
 import os
+import re
 import stat
 import yaml
 import time
+import pygraphviz
 
 import rospkg
 rp = rospkg.RosPack()
@@ -384,6 +386,7 @@ class LibraryItem(TreeItem):
         # set parent package name
         self._package_name = package_name
         self._comm_item = None
+        self._machines_item = None
         self._functions_item = None
         self._tf_item = None
 
@@ -407,6 +410,10 @@ class LibraryItem(TreeItem):
         add_tf_listener_action.setIcon(QIcon(os.path.join(
             rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_in.png')))
         add_tf_listener_action.triggered.connect(self.add_tf_listener)
+        add_state_machine_action = QAction('State Machine', None)
+        add_state_machine_action.setIcon(QIcon(os.path.join(
+            rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
+        add_state_machine_action.triggered.connect(self.add_state_machine)
         add_function_action = QAction('Function', None)
         add_function_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')))
         add_function_action.triggered.connect(self.add_function)
@@ -416,6 +423,7 @@ class LibraryItem(TreeItem):
             add_basic_comm_action,
             add_tf_broadcaster_action,
             add_tf_listener_action,
+            add_state_machine_action,
             add_function_action
         ]
 
@@ -454,6 +462,12 @@ class LibraryItem(TreeItem):
                 if 'sac' in data['comm']:
                     for entry in data['comm']['sac']:
                         self.add_simple_action_client_item(data=entry)
+            if 'fsm' in data:
+                self._machines_item = TreeItem(parent=self, type=g.STATE_MACHINES_ITEM)
+                self._machines_item.setIcon(0, QIcon(os.path.join(
+                    rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
+                for fsm in data['fsm']:
+                    self.add_state_machine_item(data=fsm)
             if 'tf' in data:
                 self._tf_item = TransformationsItem(parent=self)
                 if 'broadcaster' in data['tf']:
@@ -638,6 +652,16 @@ class LibraryItem(TreeItem):
             self._tf_item = TransformationsItem(parent=self)
         return TfListenerItem(parent=self._tf_item, data=data)
 
+    def add_state_machine_item(self, data):
+        if not self._machines_item:
+            self._machines_item = TreeItem(parent=self, type=g.STATE_MACHINES_ITEM)
+            self._machines_item.setIcon(0, QIcon(os.path.join(
+                rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
+        item = StateMachineItem(parent=self._machines_item, data=data, package_name=self._package_name,
+                                library_name=self._name)
+        self._machines_item.setText(1, str(self._machines_item.childCount()))
+        return item
+
     def add_function_item(self, data):
         if not self._functions_item:
             self._functions_item = TransformationsItem(parent=self)
@@ -699,6 +723,12 @@ class LibraryItem(TreeItem):
         data = Controller.add_tf_listener(self._package_name, self._name)
         if data:
             self.add_tf_listener_item(data=data)
+
+    @pyqtSlot()
+    def add_state_machine(self):
+        data = Controller.add_state_machine(self._package_name, self._name)
+        if data:
+            self.add_state_machine_item(data=data)
 
     @pyqtSlot()
     def add_function(self):
@@ -856,6 +886,96 @@ class FunctionItem(TreeItem):
 
     def add_argument_item(self, data):
         return TreeItem(parent=self, type=g.FUNCTION_ARGUMENT_ITEM, key='argument', data=data)
+
+
+class StateMachineItem(TreeItem):
+
+    def __init__(self, parent, data, package_name, library_name):
+        TreeItem.__init__(self, parent=parent, type=g.STATE_MACHINE_ITEM, data=data)
+
+        # vars
+        self._package_name = package_name
+        self._library_name = library_name
+
+        # set icon
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
+        # set info
+        self.setToolTip(0, 'Finite State Machine')
+        self.setToolTip(1, 'Finite State Machine')
+        self.setStatusTip(0, 'Finite State Machine')
+        self.setStatusTip(1, 'Finite State Machine')
+        self.setWhatsThis(0, 'Finite State Machine')
+        self.setWhatsThis(1, 'Finite State Machine')
+
+        self._states_item = TreeItem(parent=self, type=g.MACHINE_STATES_ITEM)
+        self._states_item.setIcon(0, QIcon(os.path.join(
+            rp.get_path('roslab_ide'), 'resource', 'icons', 'machine_state.png')))
+
+        # add states
+        for state in data['states']:
+            self.add_state_item(data=state)
+
+        # mod actions
+        visualize_machine_action = QAction('Visualize', None)
+        # show_machine_action.setIcon(QIcon(os.path.join(
+        #     rp.get_path('roslab_ide'), 'resource', 'icons', 'machine_state.png')))
+        visualize_machine_action.triggered.connect(self.visualize_machine)
+        self._mod_actions = [visualize_machine_action]
+        # add actions
+        add_state_action = QAction('State', None)
+        add_state_action.setIcon(QIcon(os.path.join(
+            rp.get_path('roslab_ide'), 'resource', 'icons', 'machine_state.png')))
+        add_state_action.triggered.connect(self.add_state)
+        self._add_actions = [add_state_action]
+
+    def package_name(self):
+        return self._package_name
+
+    def library_name(self):
+        return self._library_name
+
+    def add_state_item(self, data):
+        item = StateItem(parent=self._states_item, data=data)
+        self._states_item.setText(1, str(self._states_item.childCount()))
+        return item
+
+    @pyqtSlot()
+    def add_state(self):
+        data = Controller.add_machine_state()
+        if data:
+            self.add_state_item(data=data)
+
+    @pyqtSlot()
+    def visualize_machine(self):
+        Controller.visualize_state_machine(self._package_name, self._library_name, self._name)
+
+
+class StateItem(TreeItem):
+
+    def __init__(self, parent, data):
+        TreeItem.__init__(self, parent=parent, type=g.MACHINE_STATE_ITEM, data=data)
+
+        # set icon
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'machine_state.png')))
+        # set info
+        self.setToolTip(0, 'Machine State')
+        self.setToolTip(1, 'Machine State')
+        self.setStatusTip(0, 'Machine State')
+        self.setStatusTip(1, 'Machine State')
+        self.setWhatsThis(0, 'Machine State')
+        self.setWhatsThis(1, 'Machine State')
+
+        # vars
+        self._transitions_item = None
+        if 'trans' in data:
+            self._transitions_item = TreeItem(parent=self, type=g.STATE_TRANSITIONS_ITEM)
+            for transition in data['trans']:
+                self.add_transition_item(data=transition)
+
+    def add_transition_item(self, data):
+        if not self._transitions_item:
+            self._transitions_item = TreeItem(parent=self, type=g.STATE_TRANSITIONS_ITEM)
+        return KeyValueItem(parent=self._transitions_item, key='new state', value=data['state'])
 
 
 class KeyValueItem(TreeItem):
@@ -1361,6 +1481,93 @@ class Controller(object):
         return tf_data
 
     @staticmethod
+    def add_state_machine(package, library):
+        # get library data
+        """
+        Add Finite State Machine to packages' library.
+
+        :type package: str
+        :type library: str
+        :param package:
+        :param library:
+        :return:
+        """
+        library_data = Controller.get_library_data(package=package, library=library)
+        # get machine name
+        machine, ok = QInputDialog.getText(Controller._parent_widget, 'Add state machine to library', 'name:')
+        machine = str(machine)
+        if not ok or machine == '':
+            return None
+        # setup fsm data
+        fsm_data = {
+            'name': machine,
+            'states': [
+                {
+                    'name': '{}_start_state'.format(machine),
+                    'handler': '{}_start_state_handler'.format(machine)
+                },
+                {
+                    'name': '{}_finished_state'.format(machine)
+                }
+            ],
+            'start_state': '{}_start_state'.format(machine)
+        }
+        # check if library already has other machine(s)
+        if 'fsm' not in library_data:
+            library_data['fsm'] = []
+        # append machine list
+        library_data['fsm'].append(fsm_data)
+        # check functions existence
+        if 'functions' not in library_data:
+            library_data['functions'] = []
+        # append functions list with start state handler
+        library_data['functions'].append({
+            'name': '{}_start_state_handler'.format(machine),
+            'args': [{'name': 'cargo', 'default': 'None'}],
+            'code': '# TODO: implement me!\nreturn {}_finished_state, None # new_state, new_state_cargo'.format(machine)
+        })
+        # mark changed
+        Controller.data_changed()
+        # update preview
+        Controller.preview_library(package=package, library=library)
+        # return created data
+        return fsm_data
+
+    @staticmethod
+    def add_machine_state(package, library, machine):
+        # get machine data
+        machine_data = Controller.get_machine_data(package=package, library=library, machine=machine)
+        # get state name
+        state, ok = QInputDialog.getText(Controller._parent_widget, 'Add state to machine', 'name:')
+        state = str(state)
+        if not ok or state == '':
+            return None
+        # setup state data
+        state_data = {
+            'name': '{}_{}_state'.format(machine, state),
+            'handler': '{}_{}_state_handler'.format(machine, state)
+        }
+        # append state list
+        machine_data['states'].append(state_data)
+        # get library data
+        library_data = Controller.get_library_data(package=package, library=library)
+        # check functions existence
+        if 'functions' not in library_data:
+            library_data['functions'] = []
+        # append functions list with state handler
+        library_data['functions'].append({
+            'name': '{}_{}_state_handler'.format(machine, state),
+            'args': [{'name': 'cargo', 'default': 'None'}],
+            'code': '# TODO: implement me!\nreturn {}_finished_state, None # new_state, new_state_cargo'.format(machine)
+        })
+        # mark changed
+        Controller.data_changed()
+        # update preview
+        Controller.preview_library(package=package, library=library)
+        # return created data
+        return state_data
+
+    @staticmethod
     def add_function(package, library):
         """
         Add function to library in package.
@@ -1469,6 +1676,47 @@ class Controller(object):
         # print('previewing {} from {}... generated in {}'.format(library, package, elapsed))
 
     @staticmethod
+    def visualize_state_machine(package, library, machine):
+        # get machine data
+        machine_data = Controller.get_machine_data(package=package, library=library, machine=machine)
+        start_state = machine_data['start_state']
+        graph = pygraphviz.AGraph(directed=True)
+        graph.add_node(start_state, color='green', shape='invhouse')
+        for state in machine_data['states']:
+            state_name = state['name']
+            if 'handler' in state:
+                if state_name != start_state and graph.has_node(state_name):
+                    node = graph.get_node(state_name)
+                    node.attr['color'] = 'blue'
+                    node.attr['shape'] = 'rect'
+                else:
+                    graph.add_node(state_name, color='blue', shape='rect')
+                handler_data = Controller.get_function_data(package, library, state['handler'])
+                handler_code = handler_data['code']
+                # parse code return values to get transitions
+                return_pattern = re.compile(r'return \(.+\)')
+                values_pattern = re.compile(r'\(.+\)')
+                handler_returns = return_pattern.findall(handler_code)
+                if len(handler_returns):
+                    for handler_return in handler_returns:
+                        return_tuple = values_pattern.findall(handler_return)[0].replace('(', '').replace(')', '')
+                        new_state = return_tuple.split(',')[0].strip().strip("'").strip('"')
+                        new_cargo = return_tuple.split(',')[1].strip()
+                        graph.add_edge(state_name, new_state)
+                else:
+                    print('Warning: State has handler, but no transitions. Graph will be incorrect!')
+            else:
+                if graph.has_node(state_name):
+                    node = graph.get_node(state_name)
+                    node.attr['color'] = 'red'
+                    node.attr['shape'] = 'house'
+                else:
+                    graph.add_node(state_name, color='red', shape='house')
+        graph.layout(prog='dot')
+        graph.draw(path='/tmp/fsm.png')
+        # fsm_png = graph.draw(format='png')
+
+    @staticmethod
     def get_package_data(package):
         roslab_packages = Controller._workspace_data['roslab']
         package_data = g.get_dict_list_entry_by_key_value(roslab_packages, 'name', package)
@@ -1480,6 +1728,13 @@ class Controller(object):
         roslab_libraries = package_data['libraries']
         library_data = g.get_dict_list_entry_by_key_value(roslab_libraries, 'name', library)
         return library_data
+
+    @staticmethod
+    def get_machine_data(package, library, machine):
+        library_data = Controller.get_library_data(package=package, library=library)
+        library_fsm = library_data['fsm']
+        machine_data = g.get_dict_list_entry_by_key_value(library_fsm, 'name', machine)
+        return machine_data
 
     @staticmethod
     def get_function_data(package, library, function):

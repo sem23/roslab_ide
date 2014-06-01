@@ -32,8 +32,17 @@
       <property name="enabled">
        <bool>true</bool>
       </property>
+      <property name="styleSheet">
+       <string notr="true">QTabBar::tab { height: 30px; } </string>
+      </property>
       <property name="currentIndex">
        <number>-1</number>
+      </property>
+      <property name="tabsClosable">
+       <bool>true</bool>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
