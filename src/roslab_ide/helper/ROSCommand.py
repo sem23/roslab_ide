@@ -27,8 +27,11 @@ class ROSCommand():
         ROSCommand.execute(command)
 
     @staticmethod
-    def catkin_make(working_dir):
-        command = 'catkin_make'
+    def catkin_make(working_dir, package=None):
+        if package:
+            command = 'catkin_make {}'.format(package)
+        else:
+            command = 'catkin_make'
         ROSCommand.execute(command, working_dir)
 
     @staticmethod

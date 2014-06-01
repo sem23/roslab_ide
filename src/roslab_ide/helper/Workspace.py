@@ -232,8 +232,13 @@ class RoslabPackageItem(TreeItem):
         generate_package_action.setIcon(QIcon(os.path.join(
             rp.get_path('roslab_ide'), 'resource', 'icons', 'build.png')))
         generate_package_action.triggered.connect(self.generate)
+        build_package_action = QAction('build', None)
+        build_package_action.setIcon(QIcon(os.path.join(
+            rp.get_path('roslab_ide'), 'resource', 'icons', 'build.png')))
+        build_package_action.triggered.connect(self.build)
         self._mod_actions = [
-            generate_package_action
+            generate_package_action,
+            build_package_action
         ]
         # add actions
         add_dependency_action = QAction('Dependency', None)
@@ -281,6 +286,10 @@ class RoslabPackageItem(TreeItem):
     @pyqtSlot()
     def generate(self):
         Controller.generate_package(package=self._name)
+
+    @pyqtSlot()
+    def build(self):
+        Controller.build_package(package=self._name)
 
     @pyqtSlot()
     def add_dependency(self):
@@ -1093,6 +1102,10 @@ class Controller(object):
     @staticmethod
     def build_workspace():
         ROSCommand.catkin_make(Controller._workspace_path)
+
+    @staticmethod
+    def build_package(package):
+        ROSCommand.catkin_make(Controller._workspace_path, package)
 
     @staticmethod
     def data_changed():
