@@ -1576,8 +1576,6 @@ class Controller(object):
                 'name': '{}_{}_state'.format(machine, state),
                 'handler': '{}_{}_state_handler'.format(machine, state)
             }
-            # append state list
-            machine_data['states'].append(state_data)
             handler_data = {
                 'name': '{}_{}_state_handler'.format(machine, state),
                 'args': [{'name': 'cargo', 'default': 'None'}],
@@ -1595,6 +1593,8 @@ class Controller(object):
                 'name': '{}_{}_state'.format(machine, state),
             }
             handler_data = None
+        # append state list
+        machine_data['states'].append(state_data)
         # mark changed
         Controller.data_changed()
         # update preview
