@@ -289,6 +289,7 @@ class RoslabPackageItem(TreeItem):
 
     @pyqtSlot()
     def build(self):
+        # currently this seems to be senseless because python-backend packages need no 'build'
         Controller.build_package(package=self._name)
 
     @pyqtSlot()
@@ -667,13 +668,13 @@ class LibraryItem(TreeItem):
             self._machines_item.setIcon(0, QIcon(os.path.join(
                 rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
         item = StateMachineItem(parent=self._machines_item, data=data, package_name=self._package_name,
-                                library_name=self._name)
+                                library_name=self._name, library_item=self)
         self._machines_item.setText(1, str(self._machines_item.childCount()))
         return item
 
     def add_function_item(self, data):
         if not self._functions_item:
-            self._functions_item = TransformationsItem(parent=self)
+            self._functions_item = FunctionsItem(parent=self)
         function_item = FunctionItem(parent=self._functions_item, data=data)
         self._functions_item.setText(1, str(self._functions_item.childCount()))
         return function_item
@@ -906,12 +907,13 @@ class FunctionItem(TreeItem):
 
 class StateMachineItem(TreeItem):
 
-    def __init__(self, parent, data, package_name, library_name):
+    def __init__(self, parent, data, package_name, library_name, library_item):
         TreeItem.__init__(self, parent=parent, type=g.STATE_MACHINE_ITEM, data=data)
 
         # vars
         self._package_name = package_name
         self._library_name = library_name
+        self._library_item = library_item
 
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
@@ -957,9 +959,11 @@ class StateMachineItem(TreeItem):
 
     @pyqtSlot()
     def add_state(self):
-        data = Controller.add_machine_state()
-        if data:
-            self.add_state_item(data=data)
+        state_data, handler_data = Controller.add_machine_state(self._package_name, self._library_name, self._name)
+        if state_data:
+            self.add_state_item(data=state_data)
+        if handler_data:
+            self._library_item.add_function_item(data=handler_data)
 
     @pyqtSlot()
     def visualize_machine(self):
@@ -1555,37 +1559,48 @@ class Controller(object):
 
     @staticmethod
     def add_machine_state(package, library, machine):
+        # TODO: refactor this as dialog with normal/end-state selector
         # get machine data
         machine_data = Controller.get_machine_data(package=package, library=library, machine=machine)
         # get state name
         state, ok = QInputDialog.getText(Controller._parent_widget, 'Add state to machine', 'name:')
         state = str(state)
         if not ok or state == '':
-            return None
-        # setup state data
-        state_data = {
-            'name': '{}_{}_state'.format(machine, state),
-            'handler': '{}_{}_state_handler'.format(machine, state)
-        }
-        # append state list
-        machine_data['states'].append(state_data)
-        # get library data
-        library_data = Controller.get_library_data(package=package, library=library)
-        # check functions existence
-        if 'functions' not in library_data:
-            library_data['functions'] = []
-        # append functions list with state handler
-        library_data['functions'].append({
-            'name': '{}_{}_state_handler'.format(machine, state),
-            'args': [{'name': 'cargo', 'default': 'None'}],
-            'code': '# TODO: implement me!\nreturn {}_finished_state, None # new_state, new_state_cargo'.format(machine)
-        })
+            return None, None
+        type_, ok = QInputDialog.getItem(Controller._parent_widget, 'Add state to machine', 'type', ['normal', 'end'])
+        if not ok:
+            return None, None
+        if type_ == 'normal':
+            # setup state data
+            state_data = {
+                'name': '{}_{}_state'.format(machine, state),
+                'handler': '{}_{}_state_handler'.format(machine, state)
+            }
+            # append state list
+            machine_data['states'].append(state_data)
+            handler_data = {
+                'name': '{}_{}_state_handler'.format(machine, state),
+                'args': [{'name': 'cargo', 'default': 'None'}],
+                'code': "# TODO: implement me!\nreturn ('{}_finished_state', None) # next state, cargo".format(machine)
+            }
+            # get library data
+            library_data = Controller.get_library_data(package=package, library=library)
+            # check functions existence
+            if 'functions' not in library_data:
+                library_data['functions'] = []
+            # append functions list with state handler
+            library_data['functions'].append(handler_data)
+        else:
+            state_data = {
+                'name': '{}_{}_state'.format(machine, state),
+            }
+            handler_data = None
         # mark changed
         Controller.data_changed()
         # update preview
         Controller.preview_library(package=package, library=library)
         # return created data
-        return state_data
+        return state_data, handler_data
 
     @staticmethod
     def add_function(package, library):
