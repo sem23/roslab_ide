@@ -146,7 +146,9 @@ class MainWindow(QMainWindow):
             # check if function is already opened
             for page in range(self.ui.editorTabWidget.count()):
                 if str(self.ui.editorTabWidget.tabText(page)) == window_title:
-                    window_title_exists = True
+                    widget = self.ui.editorTabWidget.widget(page)
+                    self.ui.editorTabWidget.removeTab(page)
+                    del widget
             if not window_title_exists:
                 graph_png = QImage('/tmp/fsm.png')
                 graph_widget = QLabel()

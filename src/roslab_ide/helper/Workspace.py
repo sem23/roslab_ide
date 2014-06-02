@@ -1599,6 +1599,8 @@ class Controller(object):
         Controller.data_changed()
         # update preview
         Controller.preview_library(package=package, library=library)
+        # update state machine visualization
+        Controller.visualize_state_machine(package, library, machine)
         # return created data
         return state_data, handler_data
 
