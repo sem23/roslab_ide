@@ -14,6 +14,18 @@ class ROSCommand():
         ROSCommand.execute(command)
 
     @staticmethod
+    def rviz(config=None):
+        if config:
+            command = 'rosrun rviz rviz -d {}'.format(config)
+        else:
+            command = 'rosrun rviz rviz'
+        ROSCommand.execute(command)
+
+    @staticmethod
+    def rqt():
+        ROSCommand.execute('rqt')
+
+    @staticmethod
     def rosrun(package, node, args=None):
         if args:
             command = 'rosrun {0} {1}_node {2}'.format(package, node, args)

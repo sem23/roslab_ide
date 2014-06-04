@@ -177,6 +177,8 @@
      <string>ROS</string>
     </property>
     <addaction name="actionStart_roscore"/>
+    <addaction name="actionStart_rviz"/>
+    <addaction name="actionStart_rqt"/>
    </widget>
    <addaction name="menuROS"/>
    <addaction name="menuWindows"/>
@@ -211,6 +213,16 @@
   <action name="actionStart_roscore">
    <property name="text">
     <string>Start roscore</string>
+   </property>
+  </action>
+  <action name="actionStart_rviz">
+   <property name="text">
+    <string>Start rviz</string>
+   </property>
+  </action>
+  <action name="actionStart_rqt">
+   <property name="text">
+    <string>Start rqt</string>
    </property>
   </action>
  </widget>

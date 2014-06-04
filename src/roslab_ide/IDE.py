@@ -93,6 +93,8 @@ class MainWindow(QMainWindow):
         self.ui.workspaceTreeWidget.customContextMenuRequested.connect(self.show_workspace_item_context_menu)
         self.ui.actionSettings.triggered.connect(self.show_ide_settings)
         self.ui.actionStart_roscore.triggered.connect(ROSCommand.roscore)
+        self.ui.actionStart_rviz.triggered.connect(ROSCommand.rviz)
+        self.ui.actionStart_rqt.triggered.connect(ROSCommand.rqt)
         # signals (widgets visibility)
         self.ui.actionBackend_Out.triggered.connect(self.ui.editorFrame.setVisible)
         self.ui.actionStandard_Out.triggered.connect(self.ui.standardOutTextEdit.setVisible)

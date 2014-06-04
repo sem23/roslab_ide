@@ -17,7 +17,7 @@ from PyQt4.QtCore import QTimer, QProcess, QSettings
 # FIXME: If one widget is closed other opened process widgets seem to close too
 class ExternalProcessWidget(QWidget):
 
-    def __init__(self, command, working_dir=None, parent=None):
+    def __init__(self, command, working_dir=None, parent=None, keep_open=False):
         QWidget.__init__(self, parent=parent)
         # setup user interface
         ui_file = os.path.join(rp.get_path('roslab_ide'), 'resource', 'widgets', 'ExternalProcessWidget.ui')
@@ -28,14 +28,23 @@ class ExternalProcessWidget(QWidget):
         if not working_dir:
             working_dir = os.curdir
 
-        args = [
-            '-hold',
-            '-into', str(self.ui.placeholderWidget.winId()),
-            '-e', command
-        ]
+        if keep_open:
+            args = [
+                '-hold',
+                '-into', str(self.ui.placeholderWidget.winId()),
+                '-e', command
+            ]
+        else:
+            args = [
+                '-into', str(self.ui.placeholderWidget.winId()),
+                '-e', command
+            ]
         self.process = QProcess()
         self.process.setWorkingDirectory(working_dir)
         self.process.start('xterm', args)
+
+        # signals
+        self.process.finished.connect(self.close)
 
     def __del__(self):
         self.process.terminate()
