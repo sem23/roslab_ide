@@ -30,13 +30,17 @@ class PyFunctionEditor(PyEditor):
         self._package = package
         self._library = library
 
+        # TODO --> Problem: FIX it!
+        # If signals are created before text is set, there will be the question for 'save changes' even if nothing
+        # changed...
+
+        # set initial function code
+        self.setText(self._function_data['code'])
+
         # signals
         self.textChanged.connect(self.update_data)
         self.textChanged.connect(self.update_preview)
         self.textChanged.connect(Controller.data_changed)
-
-        # set initial function code
-        self.setText(self._function_data['code'])
 
     def update_data(self):
         self._function_data['code'] = literal_str(self.text())

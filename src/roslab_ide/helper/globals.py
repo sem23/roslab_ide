@@ -212,7 +212,17 @@ FUNCTION_ITEM = QTreeWidgetItem.UserType + 152
 
 FUNCTION_ARGUMENT_ITEM = QTreeWidgetItem.UserType + 200
 
-KEY_VALUE_ITEM = QTreeWidgetItem.UserType + 300
+ROS_LAUNCH_FILE_ITEM = QTreeWidgetItem.UserType + 300
+ROS_LAUNCH_PARAM_ITEM = QTreeWidgetItem.UserType + 301
+ROS_LAUNCH_INCLUDE_ITEM = QTreeWidgetItem.UserType + 302
+ROS_LAUNCH_NODE_ITEM = QTreeWidgetItem.UserType + 310
+ROS_LAUNCH_NODE_PARAM_ITEM = QTreeWidgetItem.UserType + 311
+ROS_LAUNCH_NODE_REMAP_ITEM = QTreeWidgetItem.UserType + 312
+
+ROCON_LAUNCH_FILE_ITEM = QTreeWidgetItem.UserType + 400
+
+
+KEY_VALUE_ITEM = QTreeWidgetItem.UserType + 1000
 
 # ROS_COMM_ITEMS = ['pub', 'sub', 'ss', 'sc', 'as', 'ac', 'broadcast', 'listen']
 # ROS_PRIMITIVES = ['import', 'param'] + ROS_COMM_ITEMS

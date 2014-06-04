@@ -787,6 +787,90 @@ class NodeItem(TreeItem):
         Controller.start_node_with_args(self._package_name, self._name)
 
 
+class RosLaunchFileItem(TreeItem):
+
+    def __init__(self, parent, data=None, package_name=None):
+        TreeItem.__init__(self, parent=parent, type=g.ROS_LAUNCH_FILE_ITEM, data=data)
+
+        # set parent package name
+        self._package_name = package_name
+
+        # group items
+        self._params_item = None
+        self._nodes_item = None
+        self._includes_item = None
+
+        # set icon
+#        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+        # set info
+        self.setToolTip(0, 'ROS Launch File')
+        self.setToolTip(1, 'ROS Launch File')
+        self.setStatusTip(0, 'ROS Launch File')
+        self.setStatusTip(1, 'ROS Launch File')
+        self.setWhatsThis(0, 'ROS Launch File')
+        self.setWhatsThis(1, 'ROS Launch File')
+
+        if data:
+            if 'param' in data:
+                self._params_item = TreeItem(parent=self)
+                for param in data['param']:
+                    self.add_roslaunch_parameter_item(data=param)
+            if 'include' in data:
+                self._includes_item = TreeItem(parent=self)
+                for include in data['include']:
+                    self.add_roslaunch_parameter_item(data=include)
+
+    def add_roslaunch_parameter_item(self, data):
+        pass
+
+    def add_roslaunch_include_item(self, data):
+        pass
+
+    def add_roslaunch_node_item(self, data):
+        pass
+
+
+class RosLaunchNodeItem(TreeItem):
+
+    def __init__(self, parent):
+        TreeItem.__init__(self, parent=parent)
+
+        # set icon
+#        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+        # set info
+        self.setToolTip(0, 'ROS Launch Node')
+        self.setToolTip(1, 'ROS Launch Node')
+        self.setStatusTip(0, 'ROS Launch Node')
+        self.setStatusTip(1, 'ROS Launch Node')
+        self.setWhatsThis(0, 'ROS Launch Node')
+        self.setWhatsThis(1, 'ROS Launch Node')
+
+    def add_remap_item(self, data):
+        pass
+
+    def add_param_item(self, data):
+        pass
+
+
+class RoconLaunchFileItem(TreeItem):
+
+    def __init__(self, parent, data=None, package_name=None):
+        TreeItem.__init__(self, parent=parent, type=g.ROCON_LAUNCH_FILE_ITEM, data=data)
+
+        # set parent package name
+        self._package_name = package_name
+
+        # set icon
+#        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+        # set info
+        self.setToolTip(0, 'Robots in Concert Launch File')
+        self.setToolTip(1, 'Robots in Concert Launch File')
+        self.setStatusTip(0, 'Robots in Concert Launch File')
+        self.setStatusTip(1, 'Robots in Concert Launch File')
+        self.setWhatsThis(0, 'Robots in Concert Launch File')
+        self.setWhatsThis(1, 'Robots in Concert Launch File')
+
+
 class TransformationsItem(TreeItem):
 
     def __init__(self, parent):
