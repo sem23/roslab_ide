@@ -1,5 +1,7 @@
 __author__ = 'privat'
 
+import rosnode
+import rosgraph
 from roslab_ide.widgets.ExternalProcessWidget import ExternalProcessWidget
 
 
@@ -10,11 +12,33 @@ class ROSCommand():
 
     @staticmethod
     def roscore():
-        command = 'roscore'
-        ROSCommand.execute(command)
+        # check if roscore is running
+        """
+        Start ROS master.
+
+        :return:
+        """
+        if rosgraph.is_master_online():
+            print('roscore already started!')
+            return
+        ROSCommand.execute('roscore')
 
     @staticmethod
     def rviz(config=None):
+        # check if roscore is running
+        """
+        Start rviz, the standard ROS visualization tool.
+
+        :param config:
+        :return:
+        """
+        if not rosgraph.is_master_online():
+            print('roscore is not online! Start roscore before running any other node including rviz.')
+            return
+        for node in rosnode.get_node_names():
+            if node.find('rviz') != -1:
+                print('rviz already started!')
+                return
         if config:
             command = 'rosrun rviz rviz -d {}'.format(config)
         else:
@@ -23,10 +47,22 @@ class ROSCommand():
 
     @staticmethod
     def rqt():
+        """
+        Start rqt, the standard ROS GUI plugin loader.
+
+        Note: rqt itself does not need rosmaster. Its plugins will need the rosmaster, of course!
+        """
         ROSCommand.execute('rqt')
 
     @staticmethod
     def rosrun(package, node, args=None):
+        """
+        Start ROS node from given package.
+
+        :param package: Package name
+        :param node: Node name
+        :param args: additional command line arguments
+        """
         if args:
             command = 'rosrun {0} {1}_node {2}'.format(package, node, args)
         else:
@@ -35,11 +71,26 @@ class ROSCommand():
 
     @staticmethod
     def wstool(command, name, vcs, uri, version):
+        """
+        Start ROS workspace tool to manage rosinstall data.
+
+        :param command:
+        :param name:
+        :param vcs:
+        :param uri:
+        :param version:
+        """
         command = 'wstool {0} {1} --{2} {3} --version={4}'.format(command, name, vcs, uri, version)
         ROSCommand.execute(command)
 
     @staticmethod
     def catkin_make(working_dir, package=None):
+        """
+        Start catkin_make to build the whole workspace or the given package.
+
+        :param working_dir: Working directory of external process
+        :param package: Package to build
+        """
         if package:
             command = 'catkin_make {}'.format(package)
         else:
@@ -48,9 +99,18 @@ class ROSCommand():
 
     @staticmethod
     def execute(command, working_dir=None):
+        """
+        Open a widget and execute given command in external process.
+
+        :param command: Command to execute
+        :param working_dir: Working directory of external process
+        :return:
+        """
         print('executing "{}" in external terminal...'.format(command))
         if working_dir:
             process_widget = ExternalProcessWidget(command, working_dir)
         else:
             process_widget = ExternalProcessWidget(command)
         process_widget.show()
+        # return new process
+        return process_widget
