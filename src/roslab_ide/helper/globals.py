@@ -15,6 +15,8 @@ email = 'Change name in email settings'
 place = 'Change name in place settings'
 license_ = 'Change name in license settings'
 
+keep_functions_open = False
+
 # generator backends
 backends = ['python']
 

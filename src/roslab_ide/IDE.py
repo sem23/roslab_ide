@@ -31,7 +31,7 @@ rp = rospkg.RosPack()
 # pyqt imports
 from python_qt_binding import loadUi
 from PyQt4.QtGui import QMainWindow, QGridLayout, QIcon, QMessageBox, QLabel, QImage, QPixmap
-from PyQt4.QtGui import QApplication, QCursor
+from PyQt4.QtGui import QApplication, QCursor, QWidgetAction
 from PyQt4.QtCore import Qt, QSettings, QSize, QPoint
 
 # roslab imports
@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         self.ui = loadUi(ui_file, self)
         self.ui.editorTabWidget.tabCloseRequested.connect(self.close_editor_tab)
         self.ui.previewTextEdit = PyEditor()
-        self.ui.editorLayout = QGridLayout(self.ui.editorFrame).addWidget(self.ui.previewTextEdit)
+        QGridLayout(self.ui.backendDockWidgetContents).addWidget(self.ui.previewTextEdit)
         self.ui.workspaceTreeWidget.setSortingEnabled(True)
         self.ui.workspaceTreeWidget.sortItems(0, Qt.AscendingOrder)
 
@@ -95,9 +95,20 @@ class MainWindow(QMainWindow):
         self.ui.actionStart_roscore.triggered.connect(ROSCommand.roscore)
         self.ui.actionStart_rviz.triggered.connect(ROSCommand.rviz)
         self.ui.actionStart_rqt.triggered.connect(ROSCommand.rqt)
-        # signals (widgets visibility)
-        self.ui.actionBackend_Out.triggered.connect(self.ui.editorFrame.setVisible)
-        self.ui.actionStandard_Out.triggered.connect(self.ui.standardOutTextEdit.setVisible)
+
+        # actions (dock widgets visibility)
+        action = self.ui.stdOutDockWidget.toggleViewAction()
+        action.setText('std out')
+        action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'konsole1.png')))
+        self.ui.menuWindows.addAction(action)
+        action = self.ui.backendDockWidget.toggleViewAction()
+        action.setText('backend preview')
+        action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'readme.png')))
+        self.ui.menuWindows.addAction(action)
+        action = self.ui.machineDockWidget.toggleViewAction()
+        action.setText('fsm preview')
+        action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
+        self.ui.menuWindows.addAction(action)
 
         # restore global settings
         g.restore_settings()
@@ -115,6 +126,11 @@ class MainWindow(QMainWindow):
         if item_type == g.LIBRARY_ITEM:
             # generate preview
             current_item.preview()
+            if not g.keep_functions_open:
+                for index in range(self.ui.editorTabWidget.count()):
+                    widget = self.ui.editorTabWidget.widget(0)
+                    self.ui.editorTabWidget.removeTab(0)
+                    del widget
             # open library functions in editor
             for function_item in current_item.function_items():
                 package = current_item.package_name()
@@ -129,34 +145,26 @@ class MainWindow(QMainWindow):
                 )
                 window_title_exists = False
                 # check if function is already opened
-                for page in range(self.ui.editorTabWidget.count()):
-                    if str(self.ui.editorTabWidget.tabText(page)) == window_title:
-                        window_title_exists = True
+                if not g.keep_functions_open:
+                    for page in range(self.ui.editorTabWidget.count()):
+                        if str(self.ui.editorTabWidget.tabText(page)) == window_title:
+                            window_title_exists = True
                 if not window_title_exists:
                     function_data = Controller.get_function_data(package, library, function)
                     editor = PyFunctionEditor(function_data=function_data, package=package,
                                               library=library, parent=self)
                     self.ui.editorTabWidget.addTab(editor, QIcon(os.path.join(
                         rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')), window_title)
+
         if item_type == g.STATE_MACHINE_ITEM:
             package = current_item.package_name()
             library = current_item.library_name()
             machine = current_item.name()
             Controller.visualize_state_machine(package, library, machine)
-            window_title = 'Library: {0}\nMachine: {1}'.format(library, machine)
-            window_title_exists = False
-            # check if function is already opened
-            for page in range(self.ui.editorTabWidget.count()):
-                if str(self.ui.editorTabWidget.tabText(page)) == window_title:
-                    widget = self.ui.editorTabWidget.widget(page)
-                    self.ui.editorTabWidget.removeTab(page)
-                    del widget
-            if not window_title_exists:
-                graph_png = QImage('/tmp/fsm.png')
-                graph_widget = QLabel()
-                graph_widget.setPixmap(QPixmap.fromImage(graph_png))
-                self.ui.editorTabWidget.addTab(graph_widget, QIcon(os.path.join(
-                    rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')), window_title)
+            window_title = 'Library: {0} | Machine: {1}'.format(library, machine)
+            graph_png = QImage('/tmp/fsm.png')
+            self.ui.fsmGraphLabel.setPixmap(QPixmap.fromImage(graph_png))
+            self.ui.machineDockWidget.setWindowTitle(window_title)
 
     def close_editor_tab(self, index):
         tab_widget = self.ui.editorTabWidget.widget(index)
@@ -195,43 +203,20 @@ class MainWindow(QMainWindow):
         settings = QSettings('semCo', 'ROSLab IDE')
         # store window settings
         settings.beginGroup('MainWindow')
-        settings.setValue('pos', self.pos())
-        settings.setValue('size', self.size())
-        settings.setValue('maximized', self.isMaximized())
-        settings.endGroup()
-        settings.beginGroup('Backend Out')
-        settings.setValue('visible', self.ui.editorFrame.isVisible())
-        settings.endGroup()
-        settings.beginGroup('Standard Out')
-        settings.setValue('visible', self.ui.standardOutTextEdit.isVisible())
+        settings.setValue('geometry', self.saveGeometry())
+        settings.setValue('state', self.saveState())
         settings.endGroup()
 
     def load_settings(self):
         settings = QSettings('semCo', 'ROSLab IDE')
         # restore window settings
         settings.beginGroup('MainWindow')
-        self.resize(settings.value('size', QSize(1240, 800)))
-        self.move(settings.value('pos', QPoint(0, 0)))
-        if str(settings.value('maximized', 'false')) != 'false':
-            self.showMaximized()
-        settings.endGroup()
-        # standard out
-        settings.beginGroup('Standard Out')
-        if str(settings.value('visible', 'false')) == 'false':
-            self.ui.standardOutTextEdit.setVisible(False)
-            self.ui.actionStandard_Out.setChecked(False)
-        else:
-            self.ui.standardOutTextEdit.setVisible(True)
-            self.ui.actionStandard_Out.setChecked(True)
-        settings.endGroup()
-        # backend out
-        settings.beginGroup('Backend Out')
-        if str(settings.value('visible', 'false')) == 'false':
-            self.ui.editorFrame.setVisible(False)
-            self.ui.actionBackend_Out.setChecked(False)
-        else:
-            self.ui.editorFrame.setVisible(True)
-            self.ui.actionBackend_Out.setChecked(True)
+        geometry = settings.value('geometry')
+        if geometry:
+            self.restoreGeometry(geometry)
+        state = settings.value('state')
+        if state:
+            self.restoreState(state)
         settings.endGroup()
 
 
