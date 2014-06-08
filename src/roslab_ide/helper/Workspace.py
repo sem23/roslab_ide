@@ -19,6 +19,7 @@ import roslab_ide.helper.globals as g
 
 from roslab_ide.dialogs.RosinstallPackageDialog import RosinstallPackageDialog
 from roslab_ide.dialogs.ArgumentDialog import ArgumentDialog
+from roslab_ide.dialogs.RosLaunchNodeDialog import RosLaunchNodeDialog
 from roslab_ide.dialogs.ImportDialog import ImportDialog
 from roslab_ide.dialogs.ParameterDialog import ParameterDialog
 from roslab_ide.dialogs.CommunicationDialog import CommunicationDialog
@@ -103,6 +104,23 @@ class TreeItem(QTreeWidgetItem):
     def get_actions(self):
         return self._mod_actions + self._add_actions
 
+    def add_action(self, name, icon, slot, add=False):
+        new_action = QAction(name, None)
+        new_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', icon)))
+        new_action.triggered.connect(slot)
+        if add:
+            self._add_actions.append(new_action)
+        else:
+            self._mod_actions.append(new_action)
+
+    def setWTS(self, key_info, value_info):
+        self.setWhatsThis(0, key_info)
+        self.setWhatsThis(1, value_info)
+        self.setToolTip(0, key_info)
+        self.setToolTip(1, value_info)
+        self.setStatusTip(0, key_info)
+        self.setStatusTip(1, value_info)
+
     def name(self):
         return self._name
 
@@ -117,39 +135,15 @@ class WorkspaceItem(TreeItem):
         # set name
         self._name = 'workspace'
         # set info
-        self.setToolTip(0, 'Current workspace')
-        self.setToolTip(1, 'Workspace path')
-        self.setStatusTip(0, 'Current workspace')
-        self.setStatusTip(1, 'Workspace path')
-        self.setWhatsThis(0, 'Current workspace')
-        self.setWhatsThis(1, 'Workspace path')
+        self.setWTS('Current workspace', 'Workspace path')
 
         # setup mod actions
-        change_workspace_action = QAction('change', None)
-        change_workspace_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'change.png')))
-        change_workspace_action.triggered.connect(self.change_workspace)
-        build_workspace_action = QAction('build', None)
-        build_workspace_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'build.png')))
-        build_workspace_action.triggered.connect(self.build_workspace)
-        self._mod_actions = [
-            change_workspace_action,
-            build_workspace_action
-        ]
+        self.add_action('change', 'change.png', self.change_workspace)
+        self.add_action('build', 'build.png', self.build_workspace)
+
         # setup add actions
-        add_roslab_package_action = QAction('ROSLab package', None)
-        add_roslab_package_action.triggered.connect(self.add_roslab_package)
-        add_roslab_package_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'open-box.png')))
-        add_rosinstall_package_action = QAction('rosinstall package', None)
-        add_rosinstall_package_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'box.png')))
-        add_rosinstall_package_action.triggered.connect(self.add_rosinstall_package)
-        self._add_actions = [
-            add_roslab_package_action,
-            add_rosinstall_package_action
-        ]
+        self.add_action('ROSLab package', 'open-box.png', self.add_roslab_package, add=True)
+        self.add_action('rosinstall package', 'box.png', self.add_rosinstall_package, add=True)
 
     @pyqtSlot()
     def change_workspace(self):
@@ -177,24 +171,14 @@ class RoslabPackagesItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'package.png')))
         # set info
-        self.setToolTip(0, 'ROSLab packages')
-        self.setToolTip(1, 'ROSLab package count')
-        self.setStatusTip(0, 'ROSLab packages')
-        self.setStatusTip(1, 'ROSLab package count')
-        self.setWhatsThis(0, 'ROSLab packages')
-        self.setWhatsThis(1, 'ROSLab package count')
+        self.setWTS('ROSLab packages', 'ROSLab packages count')
 
         self._workspace_item = parent
 
         # mod actions
         # add actions
-        add_package_action = QAction('Package', None)
-        add_package_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'open-box.png')))
-        add_package_action.triggered.connect(self._workspace_item.add_roslab_package)
-        self._add_actions = [
-            add_package_action
-        ]
+        self.add_action('Package', 'open-box.png', self._workspace_item.add_roslab_package, add=True)
+
         # vars
         self._package_count = 0
 
@@ -220,44 +204,23 @@ class RoslabPackageItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'open-box.png')))
         # set info
-        self.setToolTip(0, 'ROSLab package')
-        self.setToolTip(1, 'ROSLab package name')
-        self.setStatusTip(0, 'ROSLab package')
-        self.setStatusTip(1, 'ROSLab package name')
-        self.setWhatsThis(0, 'ROSLab package')
-        self.setWhatsThis(1, 'ROSLab package name')
+        self.setWTS('ROSLab package', 'ROSLab package name')
 
         # mod actions
-        generate_package_action = QAction('generate', None)
-        generate_package_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'build.png')))
-        generate_package_action.triggered.connect(self.generate)
-        build_package_action = QAction('build', None)
-        build_package_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'build.png')))
-        build_package_action.triggered.connect(self.build)
-        self._mod_actions = [
-            generate_package_action,
-            build_package_action
-        ]
+        self.add_action('generate', 'build.png', self.generate)
+        self.add_action('build', 'build.png', self.build)
+
         # add actions
-        add_dependency_action = QAction('Dependency', None)
-        add_dependency_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'dependency.png')))
-        add_dependency_action.triggered.connect(self.add_dependency)
-        add_library_action = QAction('Library', None)
-        add_library_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'binary.png')))
-        add_library_action.triggered.connect(self.add_library)
-        add_node_action = QAction('Node', None)
-        add_node_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'executable-script.png')))
-        add_node_action.triggered.connect(self.add_node)
-        self._add_actions = [
-            add_dependency_action,
-            add_library_action,
-            add_node_action
-        ]
+        self.add_action('Dependency', 'dependency.png', self.add_dependency, add=True)
+        self.add_action('Library', 'binary.png', self.add_library, add=True)
+        self.add_action('Node', 'executable-script.png', self.add_node, add=True)
+        self.add_action('ROS launch', 'executable-script.png', self.add_ros_launch_file, add=True)
+
+        # group items
+        self._dependencies_item = None
+        self._libraries_item = None
+        self._nodes_item = None
+        self._ros_launch_files_item = None
 
         if data:
             # set package name as item value
@@ -265,23 +228,57 @@ class RoslabPackageItem(TreeItem):
             self.setText(1, self._name)
             # add child items
             if 'dependencies' in data:
+                self._dependencies_item = TreeItem(parent=self)
+                self._dependencies_item.setText(0, 'Dependencies')
                 for dependency in data['dependencies']:
                     self.add_dependency_item(data=dependency)
             if 'libraries' in data:
+                self._libraries_item = TreeItem(parent=self)
+                self._libraries_item.setText(0, 'Libraries')
                 for library in data['libraries']:
                     self.add_library_item(data=library)
             if 'nodes' in data:
+                self._nodes_item = TreeItem(parent=self)
+                self._nodes_item.setText(0, 'Nodes')
                 for node in data['nodes']:
                     self.add_node_item(data=node)
+            if 'ros_launch' in data:
+                self._ros_launch_files_item = TreeItem(parent=self)
+                self._ros_launch_files_item.setText(0, 'ROS launch files')
+                for launch_file in data['ros_launch']:
+                    self.add_ros_launch_file_item(data=launch_file)
 
     def add_dependency_item(self, data):
-        return DependencyItem(parent=self, data=data, package_name=self._name)
+        if not self._dependencies_item:
+            self._dependencies_item = TreeItem(parent=self)
+            self._dependencies_item.setText(0, 'Dependencies')
+        item = DependencyItem(parent=self._dependencies_item, data=data, package_name=self._name)
+        self._dependencies_item.setText(1, str(self._dependencies_item.childCount()))
+        return item
 
     def add_library_item(self, data):
-        return LibraryItem(parent=self, data=data, package_name=self._name)
+        if not self._libraries_item:
+            self._libraries_item = TreeItem(parent=self)
+            self._libraries_item.setText(0, 'Libraries')
+        item = LibraryItem(parent=self._libraries_item, data=data, package_name=self._name)
+        self._libraries_item.setText(1, str(self._libraries_item.childCount()))
+        return item
 
     def add_node_item(self, data):
-        return NodeItem(parent=self, data=data, package_name=self._name)
+        if not self._nodes_item:
+            self._nodes_item = TreeItem(parent=self)
+            self._nodes_item.setText(0, 'Nodes')
+        item = NodeItem(parent=self._nodes_item, data=data, package_name=self._name)
+        self._nodes_item.setText(1, str(self._nodes_item.childCount()))
+        return item
+
+    def add_ros_launch_file_item(self, data):
+        if not self._ros_launch_files_item:
+            self._ros_launch_files_item = TreeItem(parent=self)
+            self._ros_launch_files_item.setText(0, 'ROS launch files')
+        item = RosLaunchFileItem(parent=self._ros_launch_files_item, data=data, package_name=self._name)
+        self._ros_launch_files_item.setText(1, str(self._ros_launch_files_item.childCount()))
+        return item
 
     @pyqtSlot()
     def generate(self):
@@ -295,17 +292,26 @@ class RoslabPackageItem(TreeItem):
     @pyqtSlot()
     def add_dependency(self):
         data = Controller.add_dependency(self._name)
-        self.add_dependency_item(data=data)
+        if data:
+            self.add_dependency_item(data=data)
 
     @pyqtSlot()
     def add_library(self):
         data = Controller.add_library(self._name)
-        self.add_library_item(data=data)
+        if data:
+            self.add_library_item(data=data)
 
     @pyqtSlot()
     def add_node(self):
         data = Controller.add_node(self._name)
-        self.add_node_item(data=data)
+        if data:
+            self.add_node_item(data=data)
+
+    @pyqtSlot()
+    def add_ros_launch_file(self):
+        data = Controller.add_ros_launch_file(self._name)
+        if data:
+            self.add_ros_launch_file_item(data=data)
 
 
 class RosinstallPackagesItem(TreeItem):
@@ -316,12 +322,7 @@ class RosinstallPackagesItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'package.png')))
         # set info
-        self.setToolTip(0, 'rosinstall packages')
-        self.setToolTip(1, 'rosinstall package count')
-        self.setStatusTip(0, 'rosinstall packages')
-        self.setStatusTip(1, 'rosinstall package count')
-        self.setWhatsThis(0, 'rosinstall packages')
-        self.setWhatsThis(1, 'rosinstall package count')
+        self.setWTS('rosinstall packages', 'rosinstall packages count')
 
         self._workspace_item = parent
 
@@ -351,12 +352,7 @@ class RosinstallPackageItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'box.png')))
         # set info
-        self.setToolTip(0, 'rosinstall package')
-        self.setToolTip(1, 'rosinstall package name')
-        self.setStatusTip(0, 'rosinstall package')
-        self.setStatusTip(1, 'rosinstall package name')
-        self.setWhatsThis(0, 'rosinstall package')
-        self.setWhatsThis(1, 'rosinstall package name')
+        self.setWTS('rosinstall package', 'rosinstall package name')
 
 
 class DependencyItem(TreeItem):
@@ -370,12 +366,7 @@ class DependencyItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'dependency.png')))
         # set info
-        self.setToolTip(0, 'Dependency')
-        self.setToolTip(1, 'Dependency name')
-        self.setStatusTip(0, 'Dependency')
-        self.setStatusTip(1, 'Dependency name')
-        self.setWhatsThis(0, 'Dependency')
-        self.setWhatsThis(1, 'Dependency name')
+        self.setWTS('Dependency', 'Dependency name')
 
 
 class LibraryItem(TreeItem):
@@ -386,12 +377,7 @@ class LibraryItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'binary.png')))
         # set info
-        self.setToolTip(0, 'Library')
-        self.setToolTip(1, 'Library name')
-        self.setStatusTip(0, 'Library')
-        self.setStatusTip(1, 'Library name')
-        self.setWhatsThis(0, 'Library')
-        self.setWhatsThis(1, 'Library name')
+        self.setWTS('Library', 'Library name')
 
         # set parent package name
         self._package_name = package_name
@@ -402,40 +388,13 @@ class LibraryItem(TreeItem):
 
         # mod actions
         # add actions
-        add_import_action = QAction('Import', None)
-        add_import_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'import.png')))
-        add_import_action.triggered.connect(self.add_import)
-        add_param_action = QAction('Parameter', None)
-        add_param_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'param.png')))
-        add_param_action.triggered.connect(self.add_param)
-        add_basic_comm_action = QAction('Basic Communication', None)
-        add_basic_comm_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons',
-                                                         'communication.png')))
-        add_basic_comm_action.triggered.connect(self.add_basic_comm)
-        add_tf_broadcaster_action = QAction('Tf Broadcaster', None)
-        add_tf_broadcaster_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_out.png')))
-        add_tf_broadcaster_action.triggered.connect(self.add_tf_broadcaster)
-        add_tf_listener_action = QAction('Tf Listener', None)
-        add_tf_listener_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_in.png')))
-        add_tf_listener_action.triggered.connect(self.add_tf_listener)
-        add_state_machine_action = QAction('State Machine', None)
-        add_state_machine_action.setIcon(QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
-        add_state_machine_action.triggered.connect(self.add_state_machine)
-        add_function_action = QAction('Function', None)
-        add_function_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')))
-        add_function_action.triggered.connect(self.add_function)
-        self._add_actions = [
-            add_import_action,
-            add_param_action,
-            add_basic_comm_action,
-            add_tf_broadcaster_action,
-            add_tf_listener_action,
-            add_state_machine_action,
-            add_function_action
-        ]
+        self.add_action('Import', 'import.png', self.add_import, add=True)
+        self.add_action('Parameter', 'param.png', self.add_param, add=True)
+        self.add_action('Basic Communication', 'communication.png', self.add_basic_comm, add=True)
+        self.add_action('Tf Broadcaster', 'comm_out.png', self.add_tf_broadcaster, add=True)
+        self.add_action('Tf Listener', 'comm_in.png', self.add_tf_listener, add=True)
+        self.add_action('State Machine', 'state_machine.png', self.add_state_machine, add=True)
+        self.add_action('Function', 'function.png', self.add_function, add=True)
 
         # setup data
         if data:
@@ -495,12 +454,7 @@ class LibraryItem(TreeItem):
         item = TreeItem(parent=self, data=data)
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'import.png')))
         # set info
-        item.setToolTip(0, 'Import')
-        item.setToolTip(1, 'Import')
-        item.setStatusTip(0, 'Import')
-        item.setStatusTip(1, 'Import')
-        item.setWhatsThis(0, 'Import')
-        item.setWhatsThis(1, 'Import')
+        item.setWTS('Import', 'Import')
         return item
 
     def add_parameter_item(self, data):
@@ -508,12 +462,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'param.png')))
         # set info
-        item.setToolTip(0, 'Parameter')
-        item.setToolTip(1, 'Parameter name')
-        item.setStatusTip(0, 'Parameter')
-        item.setStatusTip(1, 'Parameter name')
-        item.setWhatsThis(0, 'Parameter')
-        item.setWhatsThis(1, 'Parameter name')
+        item.setWTS('Parameter', 'Parameter name')
         return item
 
     def add_publisher_item(self, data):
@@ -525,12 +474,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_out.png')))
         # set info
-        item.setToolTip(0, 'Publisher')
-        item.setToolTip(1, 'Publisher')
-        item.setStatusTip(0, 'Publisher')
-        item.setStatusTip(1, 'Publisher')
-        item.setWhatsThis(0, 'Publisher')
-        item.setWhatsThis(1, 'Publisher')
+        item.setWTS('Publisher', 'Publisher')
         return item
 
     def add_subscriber_item(self, data):
@@ -542,12 +486,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_in.png')))
         # set info
-        item.setToolTip(0, 'Subscriber')
-        item.setToolTip(1, 'Subscriber')
-        item.setStatusTip(0, 'Subscriber')
-        item.setStatusTip(1, 'Subscriber')
-        item.setWhatsThis(0, 'Subscriber')
-        item.setWhatsThis(1, 'Subscriber')
+        item.setWTS('Subscriber', 'Subscriber')
         return item
 
     def add_service_server_item(self, data):
@@ -559,12 +498,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
-        item.setToolTip(0, 'Service Server')
-        item.setToolTip(1, 'Service Server')
-        item.setStatusTip(0, 'Service Server')
-        item.setStatusTip(1, 'Service Server')
-        item.setWhatsThis(0, 'Service Server')
-        item.setWhatsThis(1, 'Service Server')
+        item.setWTS('Service Server', 'Service Server')
         return item
 
     def add_service_client_item(self, data):
@@ -576,12 +510,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
-        item.setToolTip(0, 'Service Client')
-        item.setToolTip(1, 'Service Client')
-        item.setStatusTip(0, 'Service Client')
-        item.setStatusTip(1, 'Service Client')
-        item.setWhatsThis(0, 'Service Client')
-        item.setWhatsThis(1, 'Service Client')
+        item.setWTS('Service Client', 'Service Client')
         return item
 
     def add_action_server_item(self, data):
@@ -593,12 +522,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
-        item.setToolTip(0, 'Action Server')
-        item.setToolTip(1, 'Action Server')
-        item.setStatusTip(0, 'Action Server')
-        item.setStatusTip(1, 'Action Server')
-        item.setWhatsThis(0, 'Action Server')
-        item.setWhatsThis(1, 'Action Server')
+        item.setWTS('Action Server', 'Action Server')
         return item
 
     def add_action_client_item(self, data):
@@ -610,12 +534,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
-        item.setToolTip(0, 'Action Client')
-        item.setToolTip(1, 'Action Client')
-        item.setStatusTip(0, 'Action Client')
-        item.setStatusTip(1, 'Action Client')
-        item.setWhatsThis(0, 'Action Client')
-        item.setWhatsThis(1, 'Action Client')
+        item.setWTS('Action Client', 'Action Client')
         return item
 
     def add_simple_action_server_item(self, data):
@@ -627,12 +546,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
-        item.setToolTip(0, 'Simple Action Server')
-        item.setToolTip(1, 'Simple Action Server')
-        item.setStatusTip(0, 'Simple Action Server')
-        item.setStatusTip(1, 'Simple Action Server')
-        item.setWhatsThis(0, 'Simple Action Server')
-        item.setWhatsThis(1, 'Simple Action Server')
+        item.setWTS('Simple Action Server', 'Simple Action Server')
         return item
 
     def add_simple_action_client_item(self, data):
@@ -644,12 +558,7 @@ class LibraryItem(TreeItem):
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
-        item.setToolTip(0, 'Simple Action Client')
-        item.setToolTip(1, 'Simple Action Client')
-        item.setStatusTip(0, 'Simple Action Client')
-        item.setStatusTip(1, 'Simple Action Client')
-        item.setWhatsThis(0, 'Simple Action Client')
-        item.setWhatsThis(1, 'Simple Action Client')
+        item.setWTS('Simple Action Client', 'Simple Action Client')
         return item
 
     def add_tf_broadcaster_item(self, data):
@@ -755,27 +664,14 @@ class NodeItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'executable-script.png')))
         # set info
-        self.setToolTip(0, 'Node')
-        self.setToolTip(1, 'Node name')
-        self.setStatusTip(0, 'Node')
-        self.setStatusTip(1, 'Node name')
-        self.setWhatsThis(0, 'Node')
-        self.setWhatsThis(1, 'Node name')
+        self.setWTS('Node', 'Node name')
 
         # set parent package name
         self._package_name = package_name
 
         # mod actions
-        start_action = QAction('start', None)
-        start_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'konsole1.png')))
-        start_action.triggered.connect(self.start)
-        start_with_args_action = QAction('start with args', None)
-        start_with_args_action.setIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'konsole1.png')))
-        start_with_args_action.triggered.connect(self.start_with_args)
-        self._mod_actions = [
-            start_action,
-            start_with_args_action
-        ]
+        self.add_action('start', 'konsole1.png', self.start)
+        self.add_action('start with args', 'konsole1.png', self.start_with_args)
         # add actions
 
     @pyqtSlot()
@@ -803,47 +699,60 @@ class RosLaunchFileItem(TreeItem):
         # set icon
 #        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
         # set info
-        self.setToolTip(0, 'ROS Launch File')
-        self.setToolTip(1, 'ROS Launch File')
-        self.setStatusTip(0, 'ROS Launch File')
-        self.setStatusTip(1, 'ROS Launch File')
-        self.setWhatsThis(0, 'ROS Launch File')
-        self.setWhatsThis(1, 'ROS Launch File')
+        self.setWTS('ROS Launch File', 'ROS Launch File')
 
         if data:
-            if 'param' in data:
-                self._params_item = TreeItem(parent=self)
-                for param in data['param']:
-                    self.add_roslaunch_parameter_item(data=param)
-            if 'include' in data:
-                self._includes_item = TreeItem(parent=self)
-                for include in data['include']:
-                    self.add_roslaunch_parameter_item(data=include)
+            self._params_item = TreeItem(parent=self)
+            self._params_item.setText(0, 'parameters')
+            for param in data['params']:
+                self.add_roslaunch_parameter_item(data=param)
+
+            self._includes_item = TreeItem(parent=self)
+            self._includes_item.setText(0, 'includes')
+            for include in data['includes']:
+                self.add_roslaunch_include_item(data=include)
+
+            self._nodes_item = TreeItem(parent=self)
+            self._includes_item.setText(0, 'nodes')
+            for node in data['nodes']:
+                self.add_roslaunch_node_item(data=node)
 
     def add_roslaunch_parameter_item(self, data):
-        pass
+        item = TreeItem(parent=self._params_item, data=data)
+        self._params_item.setText(1, str(self._params_item.childCount()))
+        return item
 
     def add_roslaunch_include_item(self, data):
-        pass
+        item = TreeItem(parent=self._includes_item, data=data)
+        self._includes_item.setText(1, str(self._includes_item.childCount()))
+        return item
 
     def add_roslaunch_node_item(self, data):
+        item = RosLaunchNodeItem(parent=self._nodes_item, data=data)
+        self._nodes_item.setText(1, str(self._nodes_item.childCount()))
+        return item
+
+    @pyqtSlot()
+    def add_roslaunch_parameter(self):
         pass
 
+    @pyqtSlot()
+    def add_roslaunch_include(self):
+        pass
+
+    @pyqtSlot()
+    def add_roslaunch_node(self):
+        pass
 
 class RosLaunchNodeItem(TreeItem):
 
-    def __init__(self, parent):
+    def __init__(self, parent, data):
         TreeItem.__init__(self, parent=parent)
 
         # set icon
 #        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
         # set info
-        self.setToolTip(0, 'ROS Launch Node')
-        self.setToolTip(1, 'ROS Launch Node')
-        self.setStatusTip(0, 'ROS Launch Node')
-        self.setStatusTip(1, 'ROS Launch Node')
-        self.setWhatsThis(0, 'ROS Launch Node')
-        self.setWhatsThis(1, 'ROS Launch Node')
+        self.setWTS('ROS Launch Node', 'ROS Launch Node')
 
     def add_remap_item(self, data):
         pass
@@ -863,12 +772,7 @@ class RoconLaunchFileItem(TreeItem):
         # set icon
 #        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
         # set info
-        self.setToolTip(0, 'Robots in Concert Launch File')
-        self.setToolTip(1, 'Robots in Concert Launch File')
-        self.setStatusTip(0, 'Robots in Concert Launch File')
-        self.setStatusTip(1, 'Robots in Concert Launch File')
-        self.setWhatsThis(0, 'Robots in Concert Launch File')
-        self.setWhatsThis(1, 'Robots in Concert Launch File')
+        self.setWTS('Robots in Concert Launch File', 'Robots in Concert Launch File')
 
 
 class TransformationsItem(TreeItem):
@@ -879,12 +783,7 @@ class TransformationsItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
         # set info
-        self.setToolTip(0, 'Transformations')
-        self.setToolTip(1, 'Transformations')
-        self.setStatusTip(0, 'Transformations')
-        self.setStatusTip(1, 'Transformations')
-        self.setWhatsThis(0, 'Transformations')
-        self.setWhatsThis(1, 'Transformations')
+        self.setWTS('Transformations', 'Transformations')
 
 
 class CommunicationsItem(TreeItem):
@@ -895,12 +794,7 @@ class CommunicationsItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
         # set info
-        self.setToolTip(0, 'Communications')
-        self.setToolTip(1, 'Communications count')
-        self.setStatusTip(0, 'Communications')
-        self.setStatusTip(1, 'Communications count')
-        self.setWhatsThis(0, 'Communications')
-        self.setWhatsThis(1, 'Communications count')
+        self.setWTS('Communications', 'Communications count')
 
 
 class TfListenerItem(TreeItem):
@@ -911,12 +805,7 @@ class TfListenerItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_in.png')))
         # set info
-        self.setToolTip(0, 'Transform Listener')
-        self.setToolTip(1, 'Parent -> Child')
-        self.setStatusTip(0, 'Transform Listener')
-        self.setStatusTip(1, 'Parent -> Child')
-        self.setWhatsThis(0, 'Transform Listener')
-        self.setWhatsThis(1, 'Parent -> Child')
+        self.setWTS('Transform Listener', 'Parent -> Child')
 
         # set item value from data
         self.setText(1, '{0} -> {1}'.format(data['parent_frame'], data['child_frame']))
@@ -930,12 +819,7 @@ class TfBroadcasterItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'comm_out.png')))
         # set info
-        self.setToolTip(0, 'Transform Broadcaster')
-        self.setToolTip(1, 'Parent -> Child')
-        self.setStatusTip(0, 'Transform Broadcaster')
-        self.setStatusTip(1, 'Parent -> Child')
-        self.setWhatsThis(0, 'Transform Broadcaster')
-        self.setWhatsThis(1, 'Parent -> Child')
+        self.setWTS('Transform Broadcaster', 'Parent -> Child')
 
         # set item value from data
         self.setText(1, '{0} -> {1}'.format(data['parent_frame'], data['child_frame']))
@@ -949,12 +833,7 @@ class FunctionsItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'functions.png')))
         # set info
-        self.setToolTip(0, 'Functions')
-        self.setToolTip(1, 'Functions count')
-        self.setStatusTip(0, 'Functions')
-        self.setStatusTip(1, 'Functions count')
-        self.setWhatsThis(0, 'Functions')
-        self.setWhatsThis(1, 'Functions count')
+        self.setWTS('Functions', 'Functions count')
 
 
 class FunctionItem(TreeItem):
@@ -965,12 +844,7 @@ class FunctionItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'function.png')))
         # set info
-        self.setToolTip(0, 'Function (class method)')
-        self.setToolTip(1, 'Function name')
-        self.setStatusTip(0, 'Function (class method)')
-        self.setStatusTip(1, 'Function name')
-        self.setWhatsThis(0, 'Function (class method)')
-        self.setWhatsThis(1, 'Function name')
+        self.setWTS('Function (class method)', 'Function name')
 
         # vars
         self._args = ['self']
@@ -1002,12 +876,7 @@ class StateMachineItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
         # set info
-        self.setToolTip(0, 'Finite State Machine')
-        self.setToolTip(1, 'Finite State Machine')
-        self.setStatusTip(0, 'Finite State Machine')
-        self.setStatusTip(1, 'Finite State Machine')
-        self.setWhatsThis(0, 'Finite State Machine')
-        self.setWhatsThis(1, 'Finite State Machine')
+        self.setWTS('Finite State Machine', 'Finite State Machine')
 
         self._states_item = TreeItem(parent=self, type=g.MACHINE_STATES_ITEM)
         self._states_item.setIcon(0, QIcon(os.path.join(
@@ -1062,12 +931,7 @@ class StateItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'machine_state.png')))
         # set info
-        self.setToolTip(0, 'Machine State')
-        self.setToolTip(1, 'Machine State')
-        self.setStatusTip(0, 'Machine State')
-        self.setStatusTip(1, 'Machine State')
-        self.setWhatsThis(0, 'Machine State')
-        self.setWhatsThis(1, 'Machine State')
+        self.setWTS('Machine State', 'Machine State')
 
         # vars
         self._transitions_item = None
@@ -1090,12 +954,7 @@ class KeyValueItem(TreeItem):
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'key.png')))
         # set info
-        self.setToolTip(0, 'Key')
-        self.setToolTip(1, 'Value')
-        self.setStatusTip(0, 'Key')
-        self.setStatusTip(1, 'Value')
-        self.setWhatsThis(0, 'Key')
-        self.setWhatsThis(1, 'Value')
+        self.setWTS('Key', 'Value')
 
         # mod actions
         edit_action = QAction('Edit', None)
@@ -1452,6 +1311,63 @@ class Controller(object):
         Controller.data_changed()
         # return created data
         return node_data
+
+    @staticmethod
+    def add_ros_launch_file(package):
+        # get package data
+        package_data = Controller.get_package_data(package)
+        file_name, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add ROS launch file to package', 'file name:')
+        file_name = str(file_name)
+        if not ok or file_name == '':
+            return None
+        # create roslaunch file data
+        ros_launch_data = {
+            'name': file_name,
+            'params': [],
+            'includes': [],
+            'nodes': []
+        }
+        if 'ros_launch' not in package_data:
+            package_data['ros_launch'] = []
+        # append roslaunch file list
+        package_data['ros_launch'].append(ros_launch_data)
+        # return created data
+        return ros_launch_data
+
+    @staticmethod
+    def add_rocon_launch_file(package):
+        # get package data
+        package_data = Controller.get_package_data(package)
+        file_name, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add RoCon launch file to package', 'file name:')
+        file_name = str(file_name)
+        if not ok or file_name == '':
+            return None
+        # create roslaunch file data
+        rocon_launch_data = {
+            'name': file_name
+        }
+        if 'rocon_launch' not in package_data:
+            package_data['rocon_launch'] = []
+        # append roslaunch file list
+        package_data['rocon_launch'].append(rocon_launch_data)
+        # return created data
+        return rocon_launch_data
+
+    @staticmethod
+    def add_ros_launch_node(package, launch_file):
+        # get data
+        ros_launch_data = Controller.get_ros_launch_data(package=package, launch_file=launch_file)
+        node_dialog = RosLaunchNodeDialog(parent=g.main_widget, data={})
+        if node_dialog.exec_() == QDialog.Accepted:
+            if 'nodes' not in ros_launch_data:
+                ros_launch_data['nodes'] = []
+            ros_launch_data['nodes'].append(node_dialog.data)
+            # mark data changed
+            Controller.data_changed()
+            return node_dialog.data
+        return None
 
     @staticmethod
     def add_import(package, library):
@@ -1843,6 +1759,20 @@ class Controller(object):
         roslab_packages = Controller._workspace_data['roslab']
         package_data = g.get_dict_list_entry_by_key_value(roslab_packages, 'name', package)
         return package_data
+
+    @staticmethod
+    def get_ros_launch_data(package, launch_file):
+        package_data = Controller.get_package_data(package=package)
+        roslaunch_files = package_data['ros_launch']
+        roslaunch_data = g.get_dict_list_entry_by_key_value(roslaunch_files, 'name', launch_file)
+        return roslaunch_data
+
+    @staticmethod
+    def get_rocon_launch_data(package, launch_file):
+        package_data = Controller.get_package_data(package=package)
+        roconlaunch_files = package_data['rocon_launch']
+        roslaunch_data = g.get_dict_list_entry_by_key_value(roconlaunch_files, 'name', launch_file)
+        return roslaunch_data
 
     @staticmethod
     def get_library_data(package, library):

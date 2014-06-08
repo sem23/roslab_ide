@@ -1,8 +1,12 @@
 __author__ = 'privat'
 
+import os
 import yaml
-
+import stat
 import rosmsg
+import rospkg
+rp = rospkg.RosPack()
+from catkin.find_in_workspaces import find_in_workspaces
 
 # pyqt imports
 from PyQt4.QtGui import QProgressDialog, QTreeWidgetItem, QMessageBox
@@ -61,6 +65,20 @@ def load_yaml_file(roslab_yaml):
     # get data from yaml file
     stream = open(roslab_yaml, 'r')
     return yaml.load(stream=stream)
+
+
+def get_package_executables(package):
+    executables = []
+    package_directories = find_in_workspaces(project=package)
+    for package_directory in package_directories:
+        for root, dirs, file_names in os.walk(package_directory):
+            # exclude invisible directories
+            if '/.' in root:
+                continue
+            for file_name in file_names:
+                if os.stat(os.path.join(root, file_name)).st_mode & stat.S_IEXEC:
+                    executables.append(file_name)
+    return executables
 
 
 def scan_ros_distro():
