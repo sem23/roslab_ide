@@ -701,6 +701,11 @@ class RosLaunchFileItem(TreeItem):
         # set info
         self.setWTS('ROS Launch File', 'ROS Launch File')
 
+        # add actions
+        self.add_action('Parameter', 'param.png', self.add_roslaunch_parameter, add=True)
+        self.add_action('Include', 'param.png', self.add_roslaunch_include, add=True)
+        self.add_action('Node', 'executable-script.png', self.add_roslaunch_node, add=True)
+
         if data:
             self._params_item = TreeItem(parent=self)
             self._params_item.setText(0, 'parameters')
@@ -713,7 +718,7 @@ class RosLaunchFileItem(TreeItem):
                 self.add_roslaunch_include_item(data=include)
 
             self._nodes_item = TreeItem(parent=self)
-            self._includes_item.setText(0, 'nodes')
+            self._nodes_item.setText(0, 'nodes')
             for node in data['nodes']:
                 self.add_roslaunch_node_item(data=node)
 
@@ -728,37 +733,89 @@ class RosLaunchFileItem(TreeItem):
         return item
 
     def add_roslaunch_node_item(self, data):
-        item = RosLaunchNodeItem(parent=self._nodes_item, data=data)
+        item = RosLaunchNodeItem(parent=self._nodes_item, data=data,
+                                 package_name=self._package_name, launch_file=self._name)
         self._nodes_item.setText(1, str(self._nodes_item.childCount()))
         return item
 
     @pyqtSlot()
     def add_roslaunch_parameter(self):
-        pass
+        data = Controller.add_ros_launch_param(self._package_name, self._name)
+        if data:
+            self.add_roslaunch_parameter_item(data)
 
     @pyqtSlot()
     def add_roslaunch_include(self):
-        pass
+        data = Controller.add_ros_launch_include(self._package_name, self._name)
+        if data:
+            self.add_roslaunch_include_item(data)
 
     @pyqtSlot()
     def add_roslaunch_node(self):
-        pass
+        data = Controller.add_ros_launch_node(self._package_name, self._name)
+        if data:
+            self.add_roslaunch_node_item(data)
+
 
 class RosLaunchNodeItem(TreeItem):
 
-    def __init__(self, parent, data):
+    def __init__(self, parent, data, package_name, launch_file):
         TreeItem.__init__(self, parent=parent)
 
         # set icon
-#        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'executable-script.png')))
         # set info
         self.setWTS('ROS Launch Node', 'ROS Launch Node')
 
+        # vars
+        self._package_name = package_name
+        self._launch_file = launch_file
+
+        # group items
+        self._remaps_item = None
+        self._params_item = None
+
+        # add actions
+        self.add_action('Parameter', 'param.png', self.add_param, add=True)
+        self.add_action('Remapping', 'change.png', self.add_remap, add=True)
+
+        if data:
+            if 'remap' in data:
+                self._remaps_item = TreeItem(parent=self, key='Remappings')
+                self._remaps_item.setWTS('Remappings', 'Remappings count')
+                for remap in data['remap']:
+                    self.add_remap_item(data=remap)
+            if 'param' in data:
+                self._params_item = TreeItem(parent=self, key='Parameters')
+                self._params_item.setWTS('Parameters', 'Parameters count')
+                for param in data['param']:
+                    self.add_param_item(data=param)
+
     def add_remap_item(self, data):
-        pass
+        if not self._remaps_item:
+            self._remaps_item = TreeItem(parent=self, key='Remappings')
+            self._remaps_item.setWTS('Remappings', 'Remappings count')
+        item = TreeItem(parent=self._remaps_item, type=g.ROS_LAUNCH_NODE_REMAP_ITEM)
+        return item
 
     def add_param_item(self, data):
-        pass
+        if not self._params_item:
+            self._params_item = TreeItem(parent=self, key='Parameters')
+            self._params_item.setWTS('Parameters', 'Parameters count')
+        item = TreeItem(parent=self._params_item, type=g.ROS_LAUNCH_NODE_PARAM_ITEM)
+        return item
+
+    @pyqtSlot()
+    def add_remap(self):
+        data = Controller.add_ros_launch_node_remap(self._package_name, self._launch_file, self._name)
+        if data:
+            self.add_remap_item(data)
+
+    @pyqtSlot()
+    def add_param(self):
+        data = Controller.add_ros_launch_node_param(self._package_name, self._launch_file, self._name)
+        if data:
+            self.add_param_item(data)
 
 
 class RoconLaunchFileItem(TreeItem):
@@ -1352,8 +1409,70 @@ class Controller(object):
             package_data['rocon_launch'] = []
         # append roslaunch file list
         package_data['rocon_launch'].append(rocon_launch_data)
+        # mark changed
+        Controller.data_changed()
         # return created data
         return rocon_launch_data
+
+    @staticmethod
+    def add_ros_launch_include(package, launch_file):
+        # get data
+        ros_launch_data = Controller.get_ros_launch_data(package=package, launch_file=launch_file)
+        # rospack find is used to find package path
+        package_name, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add file include to ROS launch file', 'package:')
+        package_name = str(package_name)
+        if not ok or package_name == '':
+            return None
+        file_name, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add file include to ROS launch file', 'file:')
+        file_name = str(file_name)
+        if not ok or file_name == '':
+            return None
+        # create data
+        include = {
+            'package': package_name,
+            'file': file_name
+        }
+        # check if ros laucnh file already has includes list, otherwise create it
+        if 'includes' not in ros_launch_data:
+            ros_launch_data['includes'] = []
+        # append launch file's includes list
+        ros_launch_data['includes'].append(include)
+        # mark changed
+        Controller.data_changed()
+        # return data
+        return include
+
+    @staticmethod
+    def add_ros_launch_param(package, launch_file):
+        # get data
+        ros_launch_data = Controller.get_ros_launch_data(package=package, launch_file=launch_file)
+        # user input
+        param_name, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add global parameter to ROS launch file', 'name:')
+        param_name = str(param_name)
+        if not ok or param_name == '':
+            return None
+        param_value, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add global parameter to ROS launch file', 'value:')
+        param_value = str(param_value)
+        if not ok or param_value == '':
+            return None
+        # create data
+        param = {
+            'name': param_name,
+            'value': param_value
+        }
+        # check if ros launch file already has parameter list, otherwise create it
+        if 'params' not in ros_launch_data:
+            ros_launch_data['params'] = []
+        # append launch file's includes list
+        ros_launch_data['params'].append(param)
+        # mark changed
+        Controller.data_changed()
+        # return data
+        return param
 
     @staticmethod
     def add_ros_launch_node(package, launch_file):
@@ -1368,6 +1487,66 @@ class Controller(object):
             Controller.data_changed()
             return node_dialog.data
         return None
+
+    @staticmethod
+    def add_ros_launch_node_remap(package, launch_file, node):
+        # get data
+        ros_launch_node_data = Controller.get_ros_launch_node_data(package, launch_file, node)
+        # user input
+        remap_from, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add remapping to ROS launch node', 'from:')
+        remap_from = str(remap_from)
+        if not ok or remap_from == '':
+            return None
+        remap_to, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add remapping to ROS launch node', 'to:')
+        remap_to = str(remap_to)
+        if not ok or remap_to == '':
+            return None
+        # create data
+        remap = {
+            'from': remap_from,
+            'to': remap_to
+        }
+        # check if ros launch file already has parameter list, otherwise create it
+        if 'remaps' not in ros_launch_node_data:
+            ros_launch_node_data['remaps'] = []
+        # append launch file's includes list
+        ros_launch_node_data['remaps'].append(remap)
+        # mark changed
+        Controller.data_changed()
+        # return data
+        return remap
+
+    @staticmethod
+    def add_ros_launch_node_param(package, launch_file, node):
+        # get data
+        ros_launch_node_data = Controller.get_ros_launch_node_data(package=package, launch_file=launch_file, node)
+        # user input
+        param_name, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add private parameter to ROS launch node', 'name:')
+        param_name = str(param_name)
+        if not ok or param_name == '':
+            return None
+        param_value, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add private parameter to ROS launch node', 'value:')
+        param_value = str(param_value)
+        if not ok or param_value == '':
+            return None
+        # create data
+        param = {
+            'name': param_name,
+            'value': param_value
+        }
+        # check if ros launch file already has parameter list, otherwise create it
+        if 'params' not in ros_launch_node_data:
+            ros_launch_node_data['params'] = []
+        # append launch file's includes list
+        ros_launch_node_data['params'].append(param)
+        # mark changed
+        Controller.data_changed()
+        # return data
+        return param
 
     @staticmethod
     def add_import(package, library):
@@ -1766,6 +1945,13 @@ class Controller(object):
         roslaunch_files = package_data['ros_launch']
         roslaunch_data = g.get_dict_list_entry_by_key_value(roslaunch_files, 'name', launch_file)
         return roslaunch_data
+
+    @staticmethod
+    def get_ros_launch_node_data(package, launch_file, node):
+        ros_launch_data = Controller.get_ros_launch_data(package, launch_file)
+        nodes_files = ros_launch_data['nodes']
+        node_data = g.get_dict_list_entry_by_key_value(nodes_files, 'name', node)
+        return node_data
 
     @staticmethod
     def get_rocon_launch_data(package, launch_file):
