@@ -214,7 +214,8 @@ class RoslabPackageItem(TreeItem):
         self.add_action('Dependency', 'dependency.png', self.add_dependency, add=True)
         self.add_action('Library', 'binary.png', self.add_library, add=True)
         self.add_action('Node', 'executable-script.png', self.add_node, add=True)
-        self.add_action('ROS launch', 'executable-script.png', self.add_ros_launch_file, add=True)
+        self.add_action('ROS launch', 'ros_launch.png', self.add_ros_launch_file, add=True)
+        self.add_action('Robot Concert launch', 'rocon_launch.png', self.add_rocon_launch_file, add=True)
 
         # group items
         self._dependencies_item = None
@@ -312,6 +313,11 @@ class RoslabPackageItem(TreeItem):
         data = Controller.add_ros_launch_file(self._name)
         if data:
             self.add_ros_launch_file_item(data=data)
+
+    @pyqtSlot()
+    def add_rocon_launch_file(self):
+        # TODO: implement me!
+        pass
 
 
 class RosinstallPackagesItem(TreeItem):
@@ -697,13 +703,13 @@ class RosLaunchFileItem(TreeItem):
         self._includes_item = None
 
         # set icon
-#        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'ros_launch.png')))
         # set info
         self.setWTS('ROS Launch File', 'ROS Launch File')
 
         # add actions
         self.add_action('Parameter', 'param.png', self.add_roslaunch_parameter, add=True)
-        self.add_action('Include', 'param.png', self.add_roslaunch_include, add=True)
+        self.add_action('Include', 'import.png', self.add_roslaunch_include, add=True)
         self.add_action('Node', 'executable-script.png', self.add_roslaunch_node, add=True)
 
         if data:
@@ -827,7 +833,7 @@ class RoconLaunchFileItem(TreeItem):
         self._package_name = package_name
 
         # set icon
-#        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'tf.png')))
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'rocon_launch.png')))
         # set info
         self.setWTS('Robots in Concert Launch File', 'Robots in Concert Launch File')
 
@@ -1521,7 +1527,7 @@ class Controller(object):
     @staticmethod
     def add_ros_launch_node_param(package, launch_file, node):
         # get data
-        ros_launch_node_data = Controller.get_ros_launch_node_data(package=package, launch_file=launch_file, node)
+        ros_launch_node_data = Controller.get_ros_launch_node_data(package, launch_file, node)
         # user input
         param_name, ok = QInputDialog.getText(
             Controller._parent_widget, 'Add private parameter to ROS launch node', 'name:')
