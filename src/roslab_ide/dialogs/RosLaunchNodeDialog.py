@@ -27,12 +27,12 @@ class RosLaunchNodeDialog(QDialog):
         self.ui.packageComboBox.addItems(g.ROS_PKGS)
 
         # signals
-        self.ui.packageComboBox.currentIndexChanged.connect()
+        self.ui.packageComboBox.currentIndexChanged.connect(self.packageChanged)
 
     @pyqtSlot()
     def packageChanged(self):
         self.ui.nodeComboBox.clear()
-        nodes = g.get_package_executables()
+        nodes = g.get_package_executables(self.ui.packageComboBox.currentText())
         if len(nodes):
             self.ui.nodeComboBox.addItems(nodes)
         else:
