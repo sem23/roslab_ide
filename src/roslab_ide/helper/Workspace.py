@@ -708,6 +708,8 @@ class RosLaunchFileItem(TreeItem):
         # set info
         self.setWTS('ROS Launch File', 'ROS Launch File')
 
+        # mod actions
+        self.add_action('Start', 'konsole1.png', self.start)
         # add actions
         self.add_action('Parameter', 'param.png', self.add_roslaunch_parameter, add=True)
         self.add_action('Include', 'import.png', self.add_roslaunch_include, add=True)
@@ -744,6 +746,10 @@ class RosLaunchFileItem(TreeItem):
                                  package_name=self._package_name, launch_file=self._name)
         self._nodes_item.setText(1, str(self._nodes_item.childCount()))
         return item
+
+    @pyqtSlot()
+    def start(self):
+        Controller.start_ros_launch(self._package_name, self._name)
 
     @pyqtSlot()
     def add_roslaunch_parameter(self):
@@ -1272,14 +1278,24 @@ class Controller(object):
         ROSCommand.rosrun(package, node, args)
 
     @staticmethod
+    def start_ros_launch(package, launch_file):
+        """
+        Start ROS launch file from package.
+
+        :param package:
+        :param launch_file:
+        """
+        ROSCommand.roslaunch(package, launch_file)
+
+    @staticmethod
     def add_dependency(package):
-        # get package data
         """
         Add dependency to package.
 
         :param package:
         :return:
         """
+        # get package data
         roslab_packages = Controller._workspace_data['roslab']
         package_data = g.get_dict_list_entry_by_key_value(roslab_packages, 'name', package)
         # get user input
