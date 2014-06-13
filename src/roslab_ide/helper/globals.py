@@ -39,6 +39,14 @@ class literal_str(str):
     pass
 
 
+def get_ros_env():
+    ros_env = {}
+    for k, v in os.environ.iteritems():
+        if 'ROS' in k:
+            ros_env[k] = v
+    return ros_env
+
+
 def get_dict_list_entry_by_key_value(list_, key, value):
     if type(list_) is not list:
         raise TypeError('Given list is not from type list!')
