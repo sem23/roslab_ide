@@ -78,7 +78,7 @@ class ROSCommand():
         :param launch_file:
         """
         command = 'roslaunch {} {}.launch'.format(package, launch_file)
-        ROSCommand.execute(command, keep_open=True)
+        ROSCommand.execute(command)
 
     @staticmethod
     def wstool(command, name, vcs, uri, version):
