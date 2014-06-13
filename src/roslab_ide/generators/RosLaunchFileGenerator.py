@@ -62,7 +62,7 @@ class RosLaunchFileGenerator(object):
                         remap_element.set('from', remap['from'])
                         remap_element.set('to', remap['to'])
                         node_element.append(remap_element)
-        # write file
+        # write
         tree = ET.tostring(root_element, 'utf-8')
         reparsed = dom.parseString(tree)
         return reparsed.toprettyxml(indent='  ')
