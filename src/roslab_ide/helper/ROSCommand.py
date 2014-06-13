@@ -78,7 +78,7 @@ class ROSCommand():
         :param launch_file:
         """
         command = 'roslaunch {} {}.launch'.format(package, launch_file)
-        ROSCommand.execute(command)
+        ROSCommand.execute(command, keep_open=True)
 
     @staticmethod
     def wstool(command, name, vcs, uri, version):
@@ -109,7 +109,7 @@ class ROSCommand():
         ROSCommand.execute(command, working_dir)
 
     @staticmethod
-    def execute(command, working_dir=None):
+    def execute(command, working_dir=None, keep_open=False):
         """
         Open a widget and execute given command in external process.
 
@@ -119,9 +119,9 @@ class ROSCommand():
         """
         print('executing "{}" in external terminal...'.format(command))
         if working_dir:
-            process_widget = ExternalProcessWidget(command, working_dir)
+            process_widget = ExternalProcessWidget(command, working_dir, keep_open=keep_open)
         else:
-            process_widget = ExternalProcessWidget(command)
+            process_widget = ExternalProcessWidget(command, keep_open=keep_open)
         process_widget.show()
         # return new process
         return process_widget
