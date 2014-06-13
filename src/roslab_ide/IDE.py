@@ -67,6 +67,9 @@ class MainWindow(QMainWindow):
         QGridLayout(self.ui.backendDockWidgetContents).addWidget(self.ui.previewTextEdit)
         self.ui.workspaceTreeWidget.setSortingEnabled(True)
         self.ui.workspaceTreeWidget.sortItems(0, Qt.AscendingOrder)
+        ros_env = g.get_ros_env()
+        self.ui.masterLineEdit.setText(ros_env['ROS_MASTER_URI'])
+        self.ui.hostLineEdit.setText(ros_env['ROS_HOSTNAME'])
 
         # additional icons
         self.ui.actionSettings.setIcon(QIcon(os.path.join(
@@ -89,6 +92,8 @@ class MainWindow(QMainWindow):
         self._workspace_controller = Controller(root_item=self.ui.workspaceTreeWidget.invisibleRootItem(),
                                                 parent_widget=self)
         # signals
+        self.ui.masterLineEdit.textChanged.connect(self.change_master_uri)
+        self.ui.hostLineEdit.textChanged.connect(self.change_hostname)
         self.ui.workspaceTreeWidget.itemSelectionChanged.connect(self.tree_item_selected)
         self.ui.workspaceTreeWidget.customContextMenuRequested.connect(self.show_workspace_item_context_menu)
         self.ui.actionSettings.triggered.connect(self.show_ide_settings)
@@ -179,6 +184,12 @@ class MainWindow(QMainWindow):
         if not context_menu:
             return
         context_menu.exec_(QCursor.pos())
+
+    def change_master_uri(self):
+        os.environ['ROS_MASTER_URI'] = str(self.ui.masterLineEdit.text())
+
+    def change_hostname(self):
+        os.environ['ROS_HOSTNAME'] = str(self.ui.hostLineEdit.text())
 
     def closeEvent(self, event):
         really_quit = QMessageBox.question(self, 'Close ROSLab IDE', 'Do you really want to close application?',
