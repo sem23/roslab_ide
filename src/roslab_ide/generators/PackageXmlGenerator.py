@@ -6,7 +6,7 @@ import xml.dom.minidom as dom
 
 class PackageXmlGenerator(object):
 
-    def __init__(self, name, version='0.0.0', description=None, maintainer=('TODO', 'todo@todo.com'), license='TODO',
+    def __init__(self, name, version='0.0.0', description="TODO", maintainer=('TODO', 'todo@todo.com'), license='TODO',
                  build_depends=None, run_depends=None):
 
         self._root_element = ET.Element('package')
