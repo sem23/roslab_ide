@@ -170,7 +170,7 @@ class RoslabPackagesItem(TreeItem):
         # set name
         self._name = 'ROSLab'
         # set icon
-        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'package.png')))
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'open-boxs.png')))
         # set info
         self.setWTS('ROSLab packages', 'ROSLab packages count')
 
@@ -232,21 +232,29 @@ class RoslabPackageItem(TreeItem):
             if 'dependencies' in data:
                 self._dependencies_item = TreeItem(parent=self)
                 self._dependencies_item.setText(0, 'Dependencies')
+                self._dependencies_item.setIcon(0, QIcon(
+                    os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'dependencies.png')))
                 for dependency in data['dependencies']:
                     self.add_dependency_item(data=dependency)
             if 'libraries' in data:
                 self._libraries_item = TreeItem(parent=self)
                 self._libraries_item.setText(0, 'Libraries')
+                self._libraries_item.setIcon(0, QIcon(
+                    os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'libraries.png')))
                 for library in data['libraries']:
                     self.add_library_item(data=library)
             if 'nodes' in data:
                 self._nodes_item = TreeItem(parent=self)
                 self._nodes_item.setText(0, 'Nodes')
+                self._nodes_item.setIcon(0, QIcon(
+                    os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'nodes.png')))
                 for node in data['nodes']:
                     self.add_node_item(data=node)
             if 'ros_launch' in data:
                 self._ros_launch_files_item = TreeItem(parent=self)
                 self._ros_launch_files_item.setText(0, 'ROS launch files')
+                self._ros_launch_files_item.setIcon(0, QIcon(
+                    os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'ros_launchs.png')))
                 for launch_file in data['ros_launch']:
                     self.add_ros_launch_file_item(data=launch_file)
 
@@ -254,6 +262,8 @@ class RoslabPackageItem(TreeItem):
         if not self._dependencies_item:
             self._dependencies_item = TreeItem(parent=self)
             self._dependencies_item.setText(0, 'Dependencies')
+            self._dependencies_item.setIcon(0, QIcon(
+                os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'dependencies.png')))
         item = DependencyItem(parent=self._dependencies_item, data=data, package_name=self._name)
         self._dependencies_item.setText(1, str(self._dependencies_item.childCount()))
         return item
@@ -262,6 +272,8 @@ class RoslabPackageItem(TreeItem):
         if not self._libraries_item:
             self._libraries_item = TreeItem(parent=self)
             self._libraries_item.setText(0, 'Libraries')
+            self._libraries_item.setIcon(0, QIcon(
+                os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'libraries.png')))
         item = LibraryItem(parent=self._libraries_item, data=data, package_name=self._name)
         self._libraries_item.setText(1, str(self._libraries_item.childCount()))
         return item
@@ -270,6 +282,8 @@ class RoslabPackageItem(TreeItem):
         if not self._nodes_item:
             self._nodes_item = TreeItem(parent=self)
             self._nodes_item.setText(0, 'Nodes')
+            self._nodes_item.setIcon(0, QIcon(
+                os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'nodes.png')))
         item = NodeItem(parent=self._nodes_item, data=data, package_name=self._name)
         self._nodes_item.setText(1, str(self._nodes_item.childCount()))
         return item
@@ -278,6 +292,8 @@ class RoslabPackageItem(TreeItem):
         if not self._ros_launch_files_item:
             self._ros_launch_files_item = TreeItem(parent=self)
             self._ros_launch_files_item.setText(0, 'ROS launch files')
+            self._ros_launch_files_item.setIcon(0, QIcon(
+                os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'ros_launchs.png')))
         item = RosLaunchFileItem(parent=self._ros_launch_files_item, data=data, package_name=self._name)
         self._ros_launch_files_item.setText(1, str(self._ros_launch_files_item.childCount()))
         return item
@@ -327,7 +343,7 @@ class RosinstallPackagesItem(TreeItem):
         TreeItem.__init__(self, parent=parent, type=g.ROSINSTALL_ITEM, key='rosinstall')
 
         # set icon
-        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'package.png')))
+        self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'boxs.png')))
         # set info
         self.setWTS('rosinstall packages', 'rosinstall packages count')
 
@@ -414,6 +430,8 @@ class LibraryItem(TreeItem):
                     self.add_parameter_item(data=entry)
             if 'comm' in data:
                 self._comm_item = CommunicationsItem(parent=self)
+                self._comm_item.setIcon(0, QIcon(
+                    os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communications.png')))
                 if 'pub' in data['comm']:
                     for entry in data['comm']['pub']:
                         self.add_publisher_item(data=entry)
@@ -441,7 +459,7 @@ class LibraryItem(TreeItem):
             if 'fsm' in data:
                 self._machines_item = TreeItem(parent=self, type=g.STATE_MACHINES_ITEM)
                 self._machines_item.setIcon(0, QIcon(os.path.join(
-                    rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machine.png')))
+                    rp.get_path('roslab_ide'), 'resource', 'icons', 'state_machines.png')))
                 for fsm in data['fsm']:
                     self.add_state_machine_item(data=fsm)
             if 'tf' in data:
@@ -950,7 +968,7 @@ class StateMachineItem(TreeItem):
 
         self._states_item = TreeItem(parent=self, type=g.MACHINE_STATES_ITEM)
         self._states_item.setIcon(0, QIcon(os.path.join(
-            rp.get_path('roslab_ide'), 'resource', 'icons', 'machine_state.png')))
+            rp.get_path('roslab_ide'), 'resource', 'icons', 'machine_states.png')))
 
         # add states
         for state in data['states']:

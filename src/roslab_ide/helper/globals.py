@@ -9,7 +9,7 @@ rp = rospkg.RosPack()
 from catkin.find_in_workspaces import find_in_workspaces
 
 # pyqt imports
-from PyQt4.QtGui import QProgressDialog, QTreeWidgetItem, QMessageBox
+from PyQt4.QtGui import QProgressDialog, QTreeWidgetItem, QMessageBox, QColor
 from PyQt4.QtCore import Qt, QSettings
 
 # settings
@@ -27,6 +27,7 @@ backends = ['python']
 # general
 main_widget = None
 preview_widget = None
+cursor_color = QColor(127, 127, 127)
 
 # messages & services
 ROS_PKGS = []
