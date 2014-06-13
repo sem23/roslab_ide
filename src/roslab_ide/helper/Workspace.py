@@ -29,6 +29,7 @@ from roslab_ide.backends.PyBackend import PyBackend
 from roslab_ide.generators.CMakeListsTxtGenerator import CMakeListsTxtGenerator
 from roslab_ide.generators.PackageXmlGenerator import PackageXmlGenerator
 from roslab_ide.generators.SetupPyGenerator import SetupPyGenerator
+from roslab_ide.generators.RosLaunchFileGenerator import RosLaunchFileGenerator
 from roslab_ide.IDE import __version__
 
 
@@ -766,7 +767,7 @@ class RosLaunchFileItem(TreeItem):
 class RosLaunchNodeItem(TreeItem):
 
     def __init__(self, parent, data, package_name, launch_file):
-        TreeItem.__init__(self, parent=parent)
+        TreeItem.__init__(self, parent=parent, data=data)
 
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'executable-script.png')))
@@ -2065,4 +2066,17 @@ class Controller(object):
                 node_stat = os.stat(node_path)
                 os.chmod(node_path, node_stat.st_mode | stat.S_IEXEC)
                 print('...done')
+        # generate ROS launch files
+        if len(package_data['ros_launch']):
+            if not os.path.exists(os.path.join(package_path, 'launch')):
+                os.mkdir(os.path.join(package_path, 'launch'))
+            for ros_launch_data in package_data['ros_launch']:
+                print('Generating {}.launch ...'.format(ros_launch_data['name']))
+                ros_launch_path = os.path.join(package_path, 'launch', '{}.launch'.format(ros_launch_data['name']))
+                ros_launch_file = file(ros_launch_path, 'w+')
+                ros_launch_file.write(RosLaunchFileGenerator(ros_launch_data).generate())
+                ros_launch_file.flush()
+                ros_launch_file.close()
+                print('...done')
+
         print('Successfully generated package: {}'.format(package))
