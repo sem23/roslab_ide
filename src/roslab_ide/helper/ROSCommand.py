@@ -70,6 +70,17 @@ class ROSCommand():
         ROSCommand.execute(command)
 
     @staticmethod
+    def roslaunch(package, launch_file):
+        """
+        Start ROS launch file from package.
+
+        :param package:
+        :param launch_file:
+        """
+        command = 'roslaunch {} {}.launch'.format(package, launch_file)
+        ROSCommand.execute(command)
+
+    @staticmethod
     def wstool(command, name, vcs, uri, version):
         """
         Start ROS workspace tool to manage rosinstall data.
