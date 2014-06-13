@@ -43,7 +43,8 @@ class RosLaunchNodeDialog(QDialog):
         self.data = {
             'package': str(self.ui.packageComboBox.currentText()),
             'node': str(self.ui.nodeComboBox.currentText()),
-            'name': str(self.ui.nameLineEdit.text())
+            'name': str(self.ui.nameLineEdit.text()),
+            'output': 'screen'
         }
 
         # accept dialog

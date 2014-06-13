@@ -47,6 +47,7 @@ class RosLaunchFileGenerator(object):
                 node_element.set('pkg', node['package'])
                 node_element.set('type', node['node'])
                 node_element.set('name', node['name'])
+                node_element.set('output', node['output'])
                 root_element.append(node_element)
 
                 if 'params' in node:
