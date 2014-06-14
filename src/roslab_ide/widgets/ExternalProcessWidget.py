@@ -7,18 +7,17 @@ import subprocess
 import rospkg
 rp = rospkg.RosPack()
 
-
 # pyqt imports
 from python_qt_binding import loadUi
-from PyQt4.QtGui import QWidget
+from PyQt4.QtGui import QDockWidget
 from PyQt4.QtCore import QTimer, QProcess, QSettings, pyqtSlot
 
 
 # FIXME: If one widget is closed other opened process widgets seem to close too
-class ExternalProcessWidget(QWidget):
+class ExternalProcessWidget(QDockWidget):
 
     def __init__(self, command, working_dir=None, parent=None, keep_open=False):
-        QWidget.__init__(self, parent=parent)
+        QDockWidget.__init__(self, parent=parent)
         # setup user interface
         ui_file = os.path.join(rp.get_path('roslab_ide'), 'resource', 'widgets', 'ExternalProcessWidget.ui')
         self.ui = loadUi(ui_file, self)
