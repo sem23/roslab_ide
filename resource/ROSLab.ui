@@ -144,6 +144,12 @@
    <addaction name="menuWindows"/>
   </widget>
   <widget class="QDockWidget" name="stdOutDockWidget">
+   <property name="allowedAreas">
+    <set>Qt::BottomDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>stdout</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>
