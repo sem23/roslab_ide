@@ -27,7 +27,11 @@ class ExternalProcessWidget(QWidget):
         # set working dir
         if not working_dir:
             working_dir = os.curdir
+
+        # vars
+        self._command = command
         self._process_finished = False
+
         if keep_open:
             args = [
                 '-hold',
@@ -39,12 +43,20 @@ class ExternalProcessWidget(QWidget):
                 '-into', str(self.ui.placeholderWidget.winId()),
                 '-e', command
             ]
+
+        # print info
+        print('starting "{}" in external terminal...'.format(self._command))
+        if keep_open:
+            print('(terminal will stay open after process has finished. you must close it yourself!)')
+        else:
+            print('(terminal will close after process has finished.)')
+
         self.process = QProcess()
         self.process.setWorkingDirectory(working_dir)
         self.process.start('xterm', args)
 
         # signals
-        self.process.finished.connect(self.close)
+        self.process.finished.connect(self.finished_process)
 
     def __del__(self):
         self.terminate_process()
@@ -56,20 +68,25 @@ class ExternalProcessWidget(QWidget):
         pass
 
     def terminate_process(self):
+        print('terminating "{}" in external terminal...'.format(self._command))
         self.process.terminate()
         self.process.waitForFinished()
         del self.process
         self._process_finished = True
         self.process = None
+        # print info
+        print('...done!')
 
     def process_has_finished(self):
         return self._process_finished
 
     @pyqtSlot()
     def finished_process(self):
+        print('...finished "{}" in external terminal.'.format(self._command))
         self._process_finished = True
         del self.process
         self.process = None
+        self.close()
 
     def closeEvent(self, event):
         if not self._process_finished:

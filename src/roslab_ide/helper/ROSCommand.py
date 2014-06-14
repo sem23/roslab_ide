@@ -117,7 +117,6 @@ class ROSCommand():
         :param working_dir: Working directory of external process
         :return:
         """
-        print('executing "{}" in external terminal...'.format(command))
         if working_dir:
             process_widget = ExternalProcessWidget(command, working_dir, keep_open=keep_open)
         else:
