@@ -1,7 +1,7 @@
 __author__ = 'privat'
 
 from PyQt4.QtGui import QAction, QColor, QFont, QKeySequence
-from PyQt4.Qsci import QsciScintilla, QsciLexerPython
+from PyQt4.Qsci import QsciScintilla, QsciLexerPython, QsciAPIs
 
 import roslab_ide.helper.globals as g
 from roslab_ide.helper.Workspace import Controller
@@ -12,9 +12,17 @@ class PyEditor(QsciScintilla):
     def __init__(self, parent=None):
         QsciScintilla.__init__(self, parent)
 
-        lexer = QsciLexerPython()
-        lexer.setFont(QFont('DejaVu Sans Mono'))
-        self.setLexer(lexer)
+        self._lexer = QsciLexerPython()
+        self._lexer.setFont(QFont('DejaVu Sans Mono'))
+
+        # load current preview to lexer
+        api = QsciAPIs(self._lexer)
+        api.load('/tmp/preview.py')
+        api.prepare()
+
+        self.setLexer(self._lexer)
+        self.setAutoCompletionSource(QsciScintilla.AcsAll)
+        self.setAutoCompletionThreshold(2)
         self.setAutoIndent(True)
         self.setCaretForegroundColor(g.cursor_color)
         self.zoomTo(5)
@@ -24,9 +32,9 @@ class PyFunctionEditor(PyEditor):
 
     def __init__(self, function_data, package, library, parent=None):
         PyEditor.__init__(self, parent=parent)
-        self._function_data = function_data
 
         # vars
+        self._function_data = function_data
         self._package = package
         self._library = library
 

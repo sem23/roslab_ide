@@ -1929,7 +1929,13 @@ class Controller(object):
         # start = time.time()
         backend = PyBackend(library_data['name'], data=library_data)
         g.preview_widget.parent().parent().setWindowTitle('{} | {}'.format(package, library))
-        g.preview_widget.setText(backend.generate())
+        generated = backend.generate()
+        g.preview_widget.setText(generated)
+        # save tmp file
+        tmp_file = file('/tmp/preview.py', 'w+')
+        tmp_file.write(generated)
+        tmp_file.flush()
+        tmp_file.close()
         # elapsed = (time.time() - start)
         # print('previewing {} from {}... generated in {}'.format(library, package, elapsed))
 
