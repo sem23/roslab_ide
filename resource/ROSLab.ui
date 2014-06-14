@@ -144,6 +144,12 @@
    <addaction name="menuWindows"/>
   </widget>
   <widget class="QDockWidget" name="stdOutDockWidget">
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>228</height>
+    </size>
+   </property>
    <property name="allowedAreas">
     <set>Qt::BottomDockWidgetArea</set>
    </property>

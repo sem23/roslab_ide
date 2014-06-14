@@ -128,3 +128,4 @@ class ROSCommand():
             process_widget = ExternalProcessWidget(command, keep_open=keep_open)
 
         g.main_widget.addDockWidget(Qt.BottomDockWidgetArea, process_widget)
+        g.main_widget.tabifyDockWidget(g.main_widget.ui.stdOutDockWidget, process_widget)
