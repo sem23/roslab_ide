@@ -201,6 +201,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="backendDockWidget">
+   <property name="allowedAreas">
+    <set>Qt::RightDockWidgetArea</set>
+   </property>
    <property name="windowTitle">
     <string>Backend Preview</string>
    </property>
@@ -212,6 +215,9 @@
   <widget class="QDockWidget" name="machineDockWidget">
    <property name="features">
     <set>QDockWidget::AllDockWidgetFeatures</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>FSM Graph</string>
@@ -243,6 +249,9 @@
      <width>524287</width>
      <height>110</height>
     </size>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>ROS Environment</string>
