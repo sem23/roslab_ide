@@ -22,6 +22,7 @@ import os
 import sys
 import yaml
 from yaml.representer import SafeRepresenter
+from socket import gethostname
 
 # ROS imports
 import rosmsg
@@ -32,7 +33,7 @@ rp = rospkg.RosPack()
 from python_qt_binding import loadUi
 from PyQt4.QtGui import QMainWindow, QGridLayout, QIcon, QMessageBox, QLabel, QImage, QPixmap
 from PyQt4.QtGui import QApplication, QCursor, QWidgetAction
-from PyQt4.QtCore import Qt, QSettings, QSize, QPoint
+from PyQt4.QtCore import Qt, QSettings, QSize, QPoint, pyqtSlot
 
 # roslab imports
 import roslab_ide.helper.globals as g
@@ -94,6 +95,7 @@ class MainWindow(QMainWindow):
         # signals
         self.ui.masterLineEdit.textChanged.connect(self.change_master_uri)
         self.ui.hostLineEdit.textChanged.connect(self.change_hostname)
+        self.ui.zeroconfPushButton.clicked.connect(self.set_zeroconf)
         self.ui.workspaceTreeWidget.itemSelectionChanged.connect(self.tree_item_selected)
         self.ui.workspaceTreeWidget.customContextMenuRequested.connect(self.show_workspace_item_context_menu)
         self.ui.actionSettings.triggered.connect(self.show_ide_settings)
@@ -185,9 +187,17 @@ class MainWindow(QMainWindow):
             return
         context_menu.exec_(QCursor.pos())
 
+    @pyqtSlot()
+    def set_zeroconf(self):
+        hostname = gethostname()
+        self.ui.masterLineEdit.setText('http://' + hostname + '.local:11311')
+        self.ui.hostLineEdit.setText(hostname + '.local')
+
+    @pyqtSlot()
     def change_master_uri(self):
         os.environ['ROS_MASTER_URI'] = str(self.ui.masterLineEdit.text())
 
+    @pyqtSlot()
     def change_hostname(self):
         os.environ['ROS_HOSTNAME'] = str(self.ui.hostLineEdit.text())
 
