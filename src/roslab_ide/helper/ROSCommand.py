@@ -2,7 +2,12 @@ __author__ = 'privat'
 
 import rosnode
 import rosgraph
+
+from PyQt4.QtCore import Qt
+
 from roslab_ide.widgets.ExternalProcessWidget import ExternalProcessWidget
+import roslab_ide.helper.globals as g
+
 
 
 class ROSCommand():
@@ -121,6 +126,5 @@ class ROSCommand():
             process_widget = ExternalProcessWidget(command, working_dir, keep_open=keep_open)
         else:
             process_widget = ExternalProcessWidget(command, keep_open=keep_open)
-        process_widget.show()
-        # return new process
-        return process_widget
+
+        g.main_widget.addDockWidget(Qt.BottomDockWidgetArea, process_widget)
