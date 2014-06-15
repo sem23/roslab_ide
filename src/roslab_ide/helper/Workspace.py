@@ -6,6 +6,7 @@ import stat
 import yaml
 import time
 import pygraphviz
+import platform
 
 import rospkg
 rp = rospkg.RosPack()
@@ -60,6 +61,8 @@ class TreeItem(QTreeWidgetItem):
         self._context_menu = None
 
     def __lt__(self, other):
+        if self.type() == other.type():
+            return self.text(0) < other.text(0)
         return self.type() < other.type()
 
     def add_key_value_item(self, data, key, value):
@@ -161,6 +164,65 @@ class WorkspaceItem(TreeItem):
     @pyqtSlot()
     def add_rosinstall_package(self):
         Controller.add_rosinstall_package()
+
+
+if 'Ubuntu' in platform.platform():
+    import apt
+
+    class RosDistroItem(TreeItem):
+
+        def __init__(self, parent):
+            TreeItem.__init__(self, parent=parent, type=g.UNDEFINED_ITEM, key='ROS Distro')
+
+            # parse apt cache for distributions
+            apt_cache = apt.cache.Cache()
+            ros_pkgs = []
+            ros_pkgs_i386 = []
+            ros_distributions = []
+            # search for all ros packages
+            for pkg in apt_cache.keys():
+                if pkg.startswith('ros-'):
+                    if pkg.endswith(':i386'):
+                        ros_pkgs_i386.append(pkg)
+                    else:
+                        ros_pkgs.append(pkg)
+                    ros_distribution = pkg.split('-')[1]
+                    # search for different distributions
+                    if ros_distribution not in ros_distributions:
+                        ros_distributions.append(ros_distribution)
+            # add packages distribution specific
+            for ros_distribution in ros_distributions:
+                ros_distribution_item = TreeItem(parent=self, type=g.UNDEFINED_ITEM, key=ros_distribution)
+                x64_item = TreeItem(parent=ros_distribution_item, type=g.UNDEFINED_ITEM, key='x64')
+                i386_item = TreeItem(parent=ros_distribution_item, type=g.UNDEFINED_ITEM, key='i386')
+                packages = 0
+                packages_installed = 0
+                for ros_pkg in ros_pkgs:
+                    if ros_distribution in ros_pkg:
+                        packages += 1
+                        clean_name = ros_pkg.lstrip('ros-').lstrip(ros_distribution).lstrip('-')
+                        item = TreeItem(parent=x64_item, type=g.UNDEFINED_ITEM, key=clean_name)
+                        # check if package is installed
+                        pkg = apt_cache[ros_pkg]
+                        if pkg.is_installed:
+                            packages_installed += 1
+                            item.setIcon(0, QIcon(
+                                os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'installed.png')))
+                    x64_item.setText(1, '{} / {}'.format(packages_installed, packages))
+                packages = 0
+                packages_installed = 0
+                for ros_pkg in ros_pkgs_i386:
+                    if ros_distribution in ros_pkg:
+                        packages += 1
+                        clean_name = ros_pkg.lstrip('ros-').lstrip(ros_distribution).lstrip('-')
+                        item = TreeItem(parent=i386_item, type=g.UNDEFINED_ITEM, key=clean_name)
+                        # check if package is installed
+                        pkg = apt_cache[ros_pkg]
+                        if pkg.is_installed:
+                            packages_installed += 1
+                            item.setIcon(0, QIcon(
+                                os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'installed.png')))
+                    i386_item.setText(1, '{} / {}'.format(packages_installed, packages))
 
 
 class RoslabPackagesItem(TreeItem):
@@ -1069,6 +1131,7 @@ class Controller(object):
     _workspace_name = None
     _workspace_path = None
     _workspace_item = None
+    _ros_distro_item = None
     _workspace_data = {}
 
     _roslab_item = None
@@ -1088,6 +1151,9 @@ class Controller(object):
         Controller._workspace_data = {'roslab': [], 'rosinstall': [], 'pure': []}
         # workspace root item
         Controller._workspace_item = WorkspaceItem(parent=root_item)
+        if 'Ubuntu' in platform.platform():
+            # ros distributions root item
+            Controller._ros_distro_item = RosDistroItem(parent=root_item)
         # setup workspace package list item
         Controller._roslab_item = RoslabPackagesItem(parent=self._workspace_item)
         Controller._rosinstall_item = RosinstallPackagesItem(parent=self._workspace_item)
@@ -1171,9 +1237,10 @@ class Controller(object):
                 package_data = {
                     'name': package[package_type]['local-name'],
                     'vcs': package_type,
-                    'uri': package[package_type]['uri'],
-                    'version': package[package_type]['version']
+                    'uri': package[package_type]['uri']
                 }
+                if 'version' in package[package_type]:
+                    package_data['version'] = package[package_type]['version']
                 # setup workspace data (model)
                 Controller._workspace_data['rosinstall'].append(package_data)
                 # setup workspace tree (view)
