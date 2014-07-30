@@ -466,6 +466,8 @@ class LibraryItem(TreeItem):
 
         # set parent package name
         self._package_name = package_name
+        self._imports_item = None
+        self._params_item = None
         self._comm_item = None
         self._machines_item = None
         self._functions_item = None
@@ -485,9 +487,17 @@ class LibraryItem(TreeItem):
         if data:
             # add items
             if 'import' in data:
+                self._imports_item = TreeItem(parent=self, key='Imports')
+                self._imports_item.setWTS('Imports', 'Imports count')
+                self._imports_item.setIcon(0, QIcon(
+                    os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'imports.png')))
                 for entry in data['import']:
                     self.add_import_item(data=entry)
             if 'param' in data:
+                self._params_item = TreeItem(parent=self, key='Parameters')
+                self._params_item.setWTS('Parameters', 'Parameters count')
+                self._params_item.setIcon(0, QIcon(
+                    os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'params.png')))
                 for entry in data['param']:
                     self.add_parameter_item(data=entry)
             if 'comm' in data:
@@ -538,14 +548,28 @@ class LibraryItem(TreeItem):
                     self.add_function_item(data=entry)
 
     def add_import_item(self, data):
-        item = TreeItem(parent=self, data=data)
+        if not self._imports_item:
+            self._imports_item = TreeItem(parent=self, key='Imports')
+            self._imports_item.setWTS('Imports', 'Imports count')
+            self._imports_item.setIcon(0, QIcon(
+                os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'imports.png')))
+        item = TreeItem(parent=self._imports_item, data=data)
+        # update imports count
+        self._imports_item.setText(1, str(self._imports_item.childCount()))
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'import.png')))
         # set info
         item.setWTS('Import', 'Import')
         return item
 
     def add_parameter_item(self, data):
-        item = TreeItem(parent=self, data=data)
+        if not self._params_item:
+            self._params_item = TreeItem(parent=self, key='Parameters')
+            self._params_item.setWTS('Parameters', 'Parameters count')
+            self._params_item.setIcon(0, QIcon(
+                os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'params.png')))
+        item = TreeItem(parent=self._params_item, data=data)
+        # update parameters count
+        self._params_item.setText(1, str(self._params_item.childCount()))
         # set icon
         item.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'param.png')))
         # set info
@@ -782,6 +806,7 @@ class RosLaunchFileItem(TreeItem):
         self._params_item = None
         self._nodes_item = None
         self._includes_item = None
+        self._machines_item = None
 
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'ros_launch.png')))
@@ -793,23 +818,37 @@ class RosLaunchFileItem(TreeItem):
         # add actions
         self.add_action('Parameter', 'param.png', self.add_roslaunch_parameter, add=True)
         self.add_action('Include', 'import.png', self.add_roslaunch_include, add=True)
+        self.add_action('Machine', 'konsole2.png', self.add_roslaunch_machine, add=True)
         self.add_action('Node', 'executable-script.png', self.add_roslaunch_node, add=True)
 
         if data:
             self._params_item = TreeItem(parent=self)
             self._params_item.setText(0, 'parameters')
+            if 'params' not in data:
+                data['params'] = []
             for param in data['params']:
                 self.add_roslaunch_parameter_item(data=param)
 
             self._includes_item = TreeItem(parent=self)
             self._includes_item.setText(0, 'includes')
+            if 'includes' not in data:
+                data['includes'] = []
             for include in data['includes']:
                 self.add_roslaunch_include_item(data=include)
 
             self._nodes_item = TreeItem(parent=self)
             self._nodes_item.setText(0, 'nodes')
+            if 'nodes' not in data:
+                data['nodes'] = []
             for node in data['nodes']:
                 self.add_roslaunch_node_item(data=node)
+
+            self._machines_item = TreeItem(parent=self)
+            self._machines_item.setText(0, 'machines')
+            if 'machines' not in data:
+                data['machines'] = []
+            for machine in data['machines']:
+                self.add_roslaunch_machine_item(data=machine)
 
     def add_roslaunch_parameter_item(self, data):
         item = TreeItem(parent=self._params_item, data=data)
@@ -825,6 +864,12 @@ class RosLaunchFileItem(TreeItem):
         item = RosLaunchNodeItem(parent=self._nodes_item, data=data,
                                  package_name=self._package_name, launch_file=self._name)
         self._nodes_item.setText(1, str(self._nodes_item.childCount()))
+        return item
+
+    def add_roslaunch_machine_item(self, data):
+        item = TreeItem(parent=self._machines_item, key='Machine', data=data)
+        item.setWTS('ROS Launch Machine', 'ROS Launch Machine Address')
+        self._machines_item.setText(1, str(self._machines_item.childCount()))
         return item
 
     @pyqtSlot()
@@ -849,6 +894,12 @@ class RosLaunchFileItem(TreeItem):
         if data:
             self.add_roslaunch_node_item(data)
 
+    @pyqtSlot()
+    def add_roslaunch_machine(self):
+        data = Controller.add_ros_launch_machine(self._package_name, self._name)
+        if data:
+            self.add_roslaunch_machine_item(data)
+
 
 class RosLaunchNodeItem(TreeItem):
 
@@ -864,39 +915,55 @@ class RosLaunchNodeItem(TreeItem):
         self._package_name = package_name
         self._launch_file = launch_file
 
+        # unique items
+        self._machine_item = None
+
         # group items
         self._remaps_item = None
         self._params_item = None
 
+        # mod actions
+        self.add_action('Set Machine', 'konsole2.png', self.set_machine)
+        self.add_action('Remove Machine', 'konsole2.png', self.remove_machine)
         # add actions
         self.add_action('Parameter', 'param.png', self.add_param, add=True)
         self.add_action('Remapping', 'change.png', self.add_remap, add=True)
 
         if data:
-            if 'remap' in data:
+            if 'remaps' in data:
                 self._remaps_item = TreeItem(parent=self, key='Remappings')
                 self._remaps_item.setWTS('Remappings', 'Remappings count')
-                for remap in data['remap']:
+                for remap in data['remaps']:
                     self.add_remap_item(data=remap)
-            if 'param' in data:
+            if 'params' in data:
                 self._params_item = TreeItem(parent=self, key='Parameters')
                 self._params_item.setWTS('Parameters', 'Parameters count')
-                for param in data['param']:
+                for param in data['params']:
                     self.add_param_item(data=param)
+            if 'machine' in data:
+                self._machine_item = g.get_child_item_by_key(self, 'machine')
 
     def add_remap_item(self, data):
         if not self._remaps_item:
             self._remaps_item = TreeItem(parent=self, key='Remappings')
             self._remaps_item.setWTS('Remappings', 'Remappings count')
-        item = TreeItem(parent=self._remaps_item, type=g.ROS_LAUNCH_NODE_REMAP_ITEM)
+        item = TreeItem(parent=self._remaps_item, data=data, type=g.ROS_LAUNCH_NODE_REMAP_ITEM)
         return item
 
     def add_param_item(self, data):
         if not self._params_item:
             self._params_item = TreeItem(parent=self, key='Parameters')
             self._params_item.setWTS('Parameters', 'Parameters count')
-        item = TreeItem(parent=self._params_item, type=g.ROS_LAUNCH_NODE_PARAM_ITEM)
+        item = TreeItem(parent=self._params_item, data=data, type=g.ROS_LAUNCH_NODE_PARAM_ITEM)
         return item
+
+    def set_machine_item(self, machine_name):
+        if not self._machine_item:
+            self._machine_item = KeyValueItem(parent=self, data=None, key='machine', value=machine_name)
+
+    def remove_machine_item(self):
+        self.removeChild(self._machine_item)
+        self._machine_item = None
 
     @pyqtSlot()
     def add_remap(self):
@@ -909,6 +976,17 @@ class RosLaunchNodeItem(TreeItem):
         data = Controller.add_ros_launch_node_param(self._package_name, self._launch_file, self._name)
         if data:
             self.add_param_item(data)
+
+    @pyqtSlot()
+    def set_machine(self):
+        machine_name = Controller.set_ros_launch_node_machine(self._package_name, self._launch_file, self._name)
+        if machine_name:
+            self.set_machine_item(machine_name)
+
+    @pyqtSlot()
+    def remove_machine(self):
+        Controller.remove_ros_launch_node_machine(self._package_name, self._launch_file, self._name)
+        self.remove_machine_item()
 
 
 class RoconLaunchFileItem(TreeItem):
@@ -939,7 +1017,7 @@ class TransformationsItem(TreeItem):
 class CommunicationsItem(TreeItem):
 
     def __init__(self, parent):
-        TreeItem.__init__(self, parent=parent)
+        TreeItem.__init__(self, parent=parent, key='Communications')
 
         # set icon
         self.setIcon(0, QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'communication.png')))
@@ -1192,7 +1270,7 @@ class Controller(object):
     @staticmethod
     def change_workspace():
         # reset path
-        Controller._workspace_path = path = ''
+        Controller._workspace_path = ''
         # get new path
         while Controller._workspace_path is '':
             Controller._workspace_path = str(QFileDialog.getExistingDirectory(caption='Set ROS catkin workspace'))
@@ -1311,7 +1389,8 @@ class Controller(object):
                         'roslab_version': __version__,
                         'backend': backend,
                         'libraries': [],
-                        'nodes': []
+                        'nodes': [],
+                        'ros_launch': []
                         }
         if backend == 'python':
             package_data['dependencies'] = [{'name': 'rospy'}]
@@ -1583,6 +1662,51 @@ class Controller(object):
         return param
 
     @staticmethod
+    def add_ros_launch_machine(package, launch_file):
+        # get data
+        ros_launch_data = Controller.get_ros_launch_data(package=package, launch_file=launch_file)
+        # get machine name
+        machine_name, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add machine to ROS launch file', 'name:')
+        machine_name = str(machine_name)
+        if not ok or machine_name == '':
+            return None
+        # get machine address
+        machine_address, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add machine to ROS launch file', 'address:')
+        machine_address = str(machine_address)
+        if not ok or machine_address == '':
+            return None
+        # get machine env
+        machine_env, ok = QInputDialog.getItem(
+            Controller._parent_widget, 'Add machine to ROS launch file', 'env-loader:', ['groovy', 'hydro', 'indigo'])
+        machine_env = str(machine_env)
+        if not ok or machine_env == '':
+            return None
+        # get machine user
+        machine_user, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Add machine to ROS launch file', 'user:')
+        machine_user = str(machine_user)
+        if not ok or machine_user == '':
+            return None
+        # create data
+        machine_data = {
+            'name': machine_name,
+            'address': machine_address,
+            'env-loader': '/',
+            'user': machine_user
+        }
+        # check list existence
+        if not 'machines' in ros_launch_data:
+            ros_launch_data['machines'] = []
+        # append list
+        ros_launch_data['machines'].append(machine_data)
+        # mark changed
+        Controller.data_changed()
+        # return data
+        return machine_data
+
+    @staticmethod
     def add_ros_launch_node(package, launch_file):
         # get data
         ros_launch_data = Controller.get_ros_launch_data(package=package, launch_file=launch_file)
@@ -1655,6 +1779,37 @@ class Controller(object):
         Controller.data_changed()
         # return data
         return param
+
+    @staticmethod
+    def set_ros_launch_node_machine(package, launch_file, node):
+        # get data
+        ros_launch_node_data = Controller.get_ros_launch_node_data(package, launch_file, node)
+        # user input
+        machine_name, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Set ROS launch node machine', 'name:')
+        machine_name = str(machine_name)
+        if not ok or machine_name == '':
+            return None
+        # set machine
+        ros_launch_node_data['machine'] = str(machine_name)
+        # mark changed
+        Controller.data_changed()
+        # return machine name
+        return machine_name
+
+    @staticmethod
+    def remove_ros_launch_node_machine(package, launch_file, node):
+        # get data
+        ros_launch_node_data = Controller.get_ros_launch_node_data(package, launch_file, node)
+        # check existence
+        if 'machine' not in ros_launch_node_data:
+            return True
+        # remove machine from data
+        ros_launch_node_data.pop('machine')
+        # mark changed
+        Controller.data_changed()
+        # return
+        return True
 
     @staticmethod
     def add_import(package, library):
@@ -2174,6 +2329,7 @@ class Controller(object):
                 os.chmod(node_path, node_stat.st_mode | stat.S_IEXEC)
                 print('...done')
         # generate ROS launch files
+
         if len(package_data['ros_launch']):
             if not os.path.exists(os.path.join(package_path, 'launch')):
                 os.mkdir(os.path.join(package_path, 'launch'))

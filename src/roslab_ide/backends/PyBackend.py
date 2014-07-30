@@ -14,7 +14,7 @@ from roslab_ide.helper.globals import clean_topic
 # param:
 # - name: 'name'
 #   default: 'value'
-#   type: 'type'                                        # required for c++
+#   datatype: 'type'
 # comm:
 #   pub / sub / ssr / sc / sas / sac (/ as / ac):       # lists
 #   - topic: 'name'
@@ -292,14 +292,19 @@ class PyBackend():
         else:
             self._fsm_init.append("self._{}_fsm.add_state('{}', self.{})".format(fsm_name, state_name, handler))
 
-    def add_parameter(self, name, default=None):
-        if default is None:
-            self._param_init.append("self._{0} = rospy.get_param('{0}')".format(name))
+    def add_parameter(self, name, datatype, default=''):
+        if default == '':
+            self._param_init.append("self._{0} = rospy.get_param('~{0}')".format(name))
         else:
-            if type(default) is str:
-                self._param_init.append("self._{0} = rospy.get_param('{0}', default='{1}')".format(name, default))
+            if datatype is 'string':
+                self._param_init.append("self._{0} = rospy.get_param('~{0}', default='{1}')".format(name, default))
+            elif datatype is 'bool':
+                if default in ['True', 'true', '1']:
+                    self._param_init.append("self._{0} = rospy.get_param('~{0}', default=True)".format(name))
+                else:
+                    self._param_init.append("self._{0} = rospy.get_param('~{0}', default=False)".format(name))
             else:
-                self._param_init.append("self._{0} = rospy.get_param('{0}', default={1})".format(name, default))
+                self._param_init.append("self._{0} = rospy.get_param('~{0}', default={1})".format(name, default))
 
     def add_publisher(self, msg_type, topic):
         # get module and class from msg type
@@ -373,8 +378,8 @@ class PyBackend():
             '    self.{0}{1}_tfb.sendTransform('.format(
                 parent_frame.replace('/', '_'), child_frame.replace('/', '_')),
             '        (translation.x, translation.y, translation.z),',
-            '        (rotation.x, rotation.w, rotation.z, rotation.w),',
-            '        rospy.Time.now(),',
+            '        (rotation.x, rotation.y, rotation.z, rotation.w),',
+            '        pose.header.stamp,',
             "        '{}',".format(child_frame),
             "        '{}')".format(parent_frame),
         ]
@@ -468,6 +473,9 @@ class PyBackend():
     def add_function(self, name, args, code):
         req_args = []
         opt_args = []
+        if name == 'init':
+            self._add_init = self.make_intended_block(code.splitlines(), depth=2, initial_new_line=False)
+            return
         if name == 'run':
             self._has_run = True
         sorted(args, key=itemgetter('name'))
@@ -584,7 +592,7 @@ class PyBackend():
         # gen additional init blocks
         if len(self._add_init):
             class_init.append('# additional')
-            class_init.extend(self._add_init)
+            class_init.append(self._add_init)
 
         if len(class_init) is 1:
             class_init.append('# TODO: implement me!')
@@ -615,13 +623,15 @@ class PyBackend():
         return '\n'.join(node)
 
     @staticmethod
-    def make_intended_block(block, depth=1, underintend_first_line=False):
+    def make_intended_block(block, depth=1, underintend_first_line=False, initial_new_line=True):
         if type(block) is not list:
             raise TypeError('"block" must be list of strings, instead it is: {0}'.format(type(block)))
-        intended_block = '\n'
-        if underintend_first_line:
-            intended_block += ((depth - 1) * 4) * ' '
-        else:
-            intended_block += (depth * 4) * ' '
+        intended_block = ''
+        if initial_new_line:
+            intended_block = '\n'
+            if underintend_first_line:
+                intended_block += ((depth - 1) * 4) * ' '
+            else:
+                intended_block += (depth * 4) * ' '
         intended_block += ('\n' + (depth * 4) * ' ').join(block)
         return intended_block

@@ -31,6 +31,16 @@ class ParameterDialog(QDialog):
         # get module and class
         name = str(self.ui.nameLineEdit.text())
         default = str(self.ui.defaultLineEdit.text())
-        self.data = {'name': name, 'default': default}
+        datatype = str(self.ui.typeComboBox.currentText())
+        # if  == 'int':
+        #     default = int(default)
+        # elif str(self.ui.typeComboBox.currentText()) == 'double':
+        #     default = float(default)
+        # elif str(self.ui.typeComboBox.currentText()) == 'bool':
+        #     if default in ['True', 'true']:
+        #         default = True
+        #     else:
+        #         default = False
+        self.data = {'name': name, 'default': default, 'datatype': datatype}
         # accept dialog
         QDialog.accept(self)

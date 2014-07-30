@@ -48,6 +48,8 @@ class RosLaunchFileGenerator(object):
                 node_element.set('type', node['node'])
                 node_element.set('name', node['name'])
                 node_element.set('output', node['output'])
+                if 'machine' in node:
+                    node_element.set('machine', node['machine'])
                 root_element.append(node_element)
 
                 if 'params' in node:
@@ -63,6 +65,16 @@ class RosLaunchFileGenerator(object):
                         remap_element.set('from', remap['from'])
                         remap_element.set('to', remap['to'])
                         node_element.append(remap_element)
+
+        if 'machines' in self._data:
+            for machine in self._data['machines']:
+                machine_element = ET.Element('machine')
+                machine_element.set('name', machine['name'])
+                machine_element.set('address', machine['address'])
+                machine_element.set('env-loader', machine['env-loader'])
+                machine_element.set('user', machine['user'])
+                root_element.append(machine_element)
+
         # write
         tree = ET.tostring(root_element, 'utf-8')
         reparsed = dom.parseString(tree)

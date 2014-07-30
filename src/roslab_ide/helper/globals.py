@@ -59,6 +59,14 @@ def get_dict_list_entry_by_key_value(list_, key, value):
                     'Entries: {}'.format(list_))
 
 
+def get_child_item_by_key(parent, key):
+    for index in range(parent.childCount()):
+        child = parent.child(index)
+        if child.text(0) == key:
+            return child
+    return None
+
+
 def check_topic(topic):
     if type(topic) is not str:
         topic = str(topic)
