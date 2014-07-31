@@ -31,9 +31,26 @@ rp = rospkg.RosPack()
 
 # pyqt imports
 from python_qt_binding import loadUi
-from PyQt4.QtGui import QMainWindow, QGridLayout, QIcon, QMessageBox, QLabel, QImage, QPixmap
-from PyQt4.QtGui import QApplication, QCursor, QWidgetAction
-from PyQt4.QtCore import Qt, QSettings, QSize, QPoint, pyqtSlot
+from PyQt4.QtGui import (
+    QMainWindow,
+    QGridLayout,
+    QIcon,
+    QMessageBox,
+    QLabel,
+    QImage,
+    QPixmap,
+    QApplication,
+    QCursor,
+    QWidgetAction,
+    QSplashScreen
+)
+from PyQt4.QtCore import (
+    Qt,
+    QSettings,
+    QSize,
+    QPoint,
+    pyqtSlot
+)
 
 # roslab imports
 import roslab_ide.helper.globals as g
@@ -244,6 +261,19 @@ class MainWindow(QMainWindow):
 class Application(QApplication):
     def __init__(self, args):
         QApplication.__init__(self, args)
+        self.setWindowIcon(QIcon(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'roslab-ide-logo.png')))
+        # get screen geometry
+        rect = QApplication.desktop().screenGeometry()
+        banner = QPixmap(os.path.join(rp.get_path('roslab_ide'), 'resource', 'icons', 'roslab-ide-banner.png'))
+        desired_banner_height = rect.height() / 10.0
+        desired_banner_width = banner.width() * (desired_banner_height / banner.height())
+        # show splash screen
+        splash = QSplashScreen()
+        splash.setPixmap(banner.scaled(int(desired_banner_width), int(desired_banner_height)))
+        splash.show()
+        splash.repaint()
         # show main window
         self.main_window = MainWindow()
         self.main_window.show()
+        # wait till mainwindow is shown
+        splash.finish(self.main_window)
