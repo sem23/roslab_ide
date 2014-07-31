@@ -11,9 +11,13 @@ class PyEditor(QsciScintilla):
 
     def __init__(self, parent=None):
         QsciScintilla.__init__(self, parent)
+        self.setTabWidth(4)
+        self.setTabIndents(True)
+        self.setIndentationsUseTabs(False)
 
         self._lexer = QsciLexerPython()
         self._lexer.setFont(QFont('DejaVu Sans Mono'))
+        self._lexer.setIndentationWarning(QsciLexerPython.Tabs)
 
         # load current preview to lexer
         api = QsciAPIs(self._lexer)
