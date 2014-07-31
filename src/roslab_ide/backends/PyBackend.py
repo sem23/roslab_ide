@@ -397,10 +397,12 @@ class PyBackend():
         self._tfl_init.append('self.{0}{1}_tfl = tf.TransformListener()'.format(parent, child))
         # setup get as pose function
         function = [
-            'def get{0}{1}_tf(self):'.format(parent, child),
+            'def get{0}{1}_tf(self, stamp=None):'.format(parent, child),
             '    pose = PoseStamped()',
+            '    if stamp is None:',
+            '        stamp = rospy.Time(0)',
             '    try:',
-            "        trans, rot = self.{0}{1}_tfl.lookupTransform('{2}', '{3}', rospy.Time(0))".format(
+            "        trans, rot = self.{0}{1}_tfl.lookupTransform('{2}', '{3}', stamp)".format(
                 parent, child, parent_frame, child_frame),
             '    except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):',
             '        # TODO: implement TransformListener.lookupTransform() exception handling!',
@@ -564,6 +566,11 @@ class PyBackend():
         if len(self._fsm_init):
             class_init.append('# finite state machines')
             class_init.extend(self._fsm_init)
+        # generate user init block
+        if len(self._add_init):
+            class_init.append('# user init')
+            class_init.append(self._add_init)
+            class_init.append('# end of user init')
         if len(self._pub_init):
             class_init.append('# publishers')
             class_init.extend(self._pub_init)
@@ -588,11 +595,6 @@ class PyBackend():
         if len(self._tfl_init):
             class_init.append('# tf listeners')
             class_init.extend(self._tfl_init)
-
-        # gen additional init blocks
-        if len(self._add_init):
-            class_init.append('# additional')
-            class_init.append(self._add_init)
 
         if len(class_init) is 1:
             class_init.append('# TODO: implement me!')
