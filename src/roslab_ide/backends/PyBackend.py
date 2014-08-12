@@ -406,7 +406,8 @@ class PyBackend():
                 parent, child, parent_frame, child_frame),
             '    except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):',
             '        # TODO: implement TransformListener.lookupTransform() exception handling!',
-            '        return pose',
+            "        rospy.logwarn('Error while listening to {} -> {} tf')".format(parent_frame, child_frame),
+            '        return pose, False',
             '    pose.pose.position.x = trans[0]',
             '    pose.pose.position.y = trans[1]',
             '    pose.pose.position.z = trans[2]',
@@ -414,7 +415,7 @@ class PyBackend():
             '    pose.pose.orientation.y = rot[1]',
             '    pose.pose.orientation.z = rot[2]',
             '    pose.pose.orientation.w = rot[3]',
-            '    return pose'
+            '    return pose, True'
         ]
         self._functions.append(self.make_intended_block(function))
 
@@ -554,10 +555,11 @@ class PyBackend():
         if len(self._static_class_initials):
             blocks.append(self.make_intended_block(self._static_class_initials))
 
-        # gen class __init__
+        # generate class __init__
         class_init = list()
         class_init.append('def __init__(self):')
-        # gen class initials
+        # generate usable initials (those can be used in 'user init' block)
+        # generate class initials
         if len(self._class_initials):
             class_init.extend(self._class_initials)
         if len(self._param_init):
@@ -566,35 +568,36 @@ class PyBackend():
         if len(self._fsm_init):
             class_init.append('# finite state machines')
             class_init.extend(self._fsm_init)
-        # generate user init block
-        if len(self._add_init):
-            class_init.append('# user init')
-            class_init.append(self._add_init)
-            class_init.append('# end of user init')
         if len(self._pub_init):
             class_init.append('# publishers')
             class_init.extend(self._pub_init)
-        if len(self._sub_init):
-            class_init.append('# subscribers')
-            class_init.extend(self._sub_init)
-        if len(self._ss_init):
-            class_init.append('# service servers')
-            class_init.extend(self._ss_init)
         if len(self._sc_init):
             class_init.append('# service clients')
             class_init.extend(self._sc_init)
-        if len(self._as_init):
-            class_init.append('# action servers')
-            class_init.extend(self._as_init)
-        if len(self._ac_init):
-            class_init.append('# action clients')
-            class_init.extend(self._ac_init)
         if len(self._tfb_init):
             class_init.append('# tf broadcasters')
             class_init.extend(self._tfb_init)
         if len(self._tfl_init):
             class_init.append('# tf listeners')
             class_init.extend(self._tfl_init)
+        # generate user init block
+        if len(self._add_init):
+            class_init.append('# user init')
+            class_init.append(self._add_init)
+            class_init.append('# end of user init')
+        # generate blocking initials (those can not be used within 'user init' block
+        if len(self._sub_init):
+            class_init.append('# subscribers')
+            class_init.extend(self._sub_init)
+        if len(self._ss_init):
+            class_init.append('# service servers')
+            class_init.extend(self._ss_init)
+        if len(self._as_init):
+            class_init.append('# action servers')
+            class_init.extend(self._as_init)
+        if len(self._ac_init):
+            class_init.append('# action clients')
+            class_init.extend(self._ac_init)
 
         if len(class_init) is 1:
             class_init.append('# TODO: implement me!')

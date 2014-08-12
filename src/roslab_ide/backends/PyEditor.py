@@ -1,6 +1,7 @@
 __author__ = 'privat'
 
-from PyQt4.QtGui import QAction, QColor, QFont, QKeySequence
+from PyQt4.QtCore import Qt, QEvent, pyqtSlot
+from PyQt4.QtGui import QAction, QColor, QFont, QKeySequence, QWidget
 from PyQt4.Qsci import QsciScintilla, QsciLexerPython, QsciAPIs
 
 import roslab_ide.helper.globals as g
@@ -46,6 +47,9 @@ class PyFunctionEditor(PyEditor):
         # If signals are created before text is set, there will be the question for 'save changes' even if nothing
         # changed...
 
+        # install event filter (to save package with 'CTRL+S')
+        self.installEventFilter(self)
+
         # set initial function code
         self.setText(self._function_data['code'])
 
@@ -54,8 +58,22 @@ class PyFunctionEditor(PyEditor):
         self.textChanged.connect(self.update_preview)
         self.textChanged.connect(Controller.data_changed)
 
+    def eventFilter(self, widget, event):
+        if event.type() == QEvent.ShortcutOverride:
+            if event.matches(QKeySequence.Save):
+                self.save_package()
+            event.accept()
+            return True
+        return QWidget.eventFilter(self, widget, event)
+
+    @pyqtSlot()
+    def save_package(self):
+        Controller.save_package(self._package)
+
+    @pyqtSlot()
     def update_data(self):
         self._function_data['code'] = g.literal_str(self.text())
 
+    @pyqtSlot()
     def update_preview(self):
         Controller.preview_library(self._package, self._library)

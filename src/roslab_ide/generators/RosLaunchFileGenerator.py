@@ -50,6 +50,8 @@ class RosLaunchFileGenerator(object):
                 node_element.set('output', node['output'])
                 if 'machine' in node:
                     node_element.set('machine', node['machine'])
+                if 'args' in node:
+                    node_element.set('args', node['args'])
                 root_element.append(node_element)
 
                 if 'params' in node:

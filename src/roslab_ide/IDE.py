@@ -32,6 +32,7 @@ rp = rospkg.RosPack()
 # pyqt imports
 from python_qt_binding import loadUi
 from PyQt4.QtGui import (
+    QWidget,
     QMainWindow,
     QGridLayout,
     QIcon,
@@ -47,6 +48,7 @@ from PyQt4.QtGui import (
 from PyQt4.QtCore import (
     Qt,
     QSettings,
+    QEvent,
     QSize,
     QPoint,
     pyqtSlot

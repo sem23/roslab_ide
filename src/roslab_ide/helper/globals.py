@@ -137,9 +137,9 @@ def restore_settings():
     global name, email, place
     global ROS_PKGS, ROS_MSGS, ROS_SRVS
     settings = QSettings('semCo', 'ROSLab IDE')
-    name = settings.value('name', 'Frodo')
-    email = settings.value('email', 'frodo@middle.earth')
-    place = settings.value('place', 'Middle Earth')
+    name = str(settings.value('name', 'Frodo'))
+    email = str(settings.value('email', 'frodo@middle.earth'))
+    place = str(settings.value('place', 'Middle Earth'))
     # get message packages
     size = settings.beginReadArray('msg_packages')
     for i in range(size):

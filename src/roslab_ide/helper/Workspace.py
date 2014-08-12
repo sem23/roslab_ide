@@ -756,9 +756,10 @@ class LibraryItem(TreeItem):
 
     @pyqtSlot()
     def add_state_machine(self):
-        data = Controller.add_state_machine(self._package_name, self._name)
-        if data:
-            self.add_state_machine_item(data=data)
+        fsm_data, fsm_init_function_data = Controller.add_state_machine(self._package_name, self._name)
+        if fsm_data:
+            self.add_state_machine_item(data=fsm_data)
+            self.add_function_item(data=fsm_init_function_data)
 
     @pyqtSlot()
     def add_function(self):
@@ -917,6 +918,7 @@ class RosLaunchNodeItem(TreeItem):
 
         # unique items
         self._machine_item = None
+        self._args_item = None
 
         # group items
         self._remaps_item = None
@@ -925,6 +927,7 @@ class RosLaunchNodeItem(TreeItem):
         # mod actions
         self.add_action('Set Machine', 'konsole2.png', self.set_machine)
         self.add_action('Remove Machine', 'konsole2.png', self.remove_machine)
+        self.add_action('Set Arguments', 'param.png', self.set_args)
         # add actions
         self.add_action('Parameter', 'param.png', self.add_param, add=True)
         self.add_action('Remapping', 'change.png', self.add_remap, add=True)
@@ -942,6 +945,8 @@ class RosLaunchNodeItem(TreeItem):
                     self.add_param_item(data=param)
             if 'machine' in data:
                 self._machine_item = g.get_child_item_by_key(self, 'machine')
+            if 'args' in data:
+                self._args_item = g.get_child_item_by_key(self, 'args')
 
     def add_remap_item(self, data):
         if not self._remaps_item:
@@ -956,6 +961,10 @@ class RosLaunchNodeItem(TreeItem):
             self._params_item.setWTS('Parameters', 'Parameters count')
         item = TreeItem(parent=self._params_item, data=data, type=g.ROS_LAUNCH_NODE_PARAM_ITEM)
         return item
+
+    def set_args_item(self, args):
+        if not self._args_item:
+            self._args_item = KeyValueItem(parent=self, data=None, key='args', value=args)
 
     def set_machine_item(self, machine_name):
         if not self._machine_item:
@@ -987,6 +996,12 @@ class RosLaunchNodeItem(TreeItem):
     def remove_machine(self):
         Controller.remove_ros_launch_node_machine(self._package_name, self._launch_file, self._name)
         self.remove_machine_item()
+
+    @pyqtSlot()
+    def set_args(self):
+        args = Controller.set_ros_launch_node_args(self._package_name, self._launch_file, self._name)
+        if args:
+            self.set_args_item(args)
 
 
 class RoconLaunchFileItem(TreeItem):
@@ -1364,6 +1379,15 @@ class Controller(object):
         print('saved workspace: {}!'.format(Controller._workspace_name))
 
     @staticmethod
+    def save_package(package_name):
+        # get package data
+        data = Controller.get_package_data(package_name)
+        roslab_yaml = os.path.join(Controller._workspace_path, 'src', data['name'], 'roslab.yaml')
+        stream = open(roslab_yaml, 'w')
+        yaml.dump(data=data, stream=stream, default_flow_style=False)
+        print('saved ROSLab package: {}!'.format(data['name']))
+
+    @staticmethod
     def add_roslab_package():
         # get package name
         package_name, ok = QInputDialog.getText(Controller._parent_widget, 'Add package to workspace', 'name:')
@@ -1386,7 +1410,9 @@ class Controller(object):
         os.mkdir(pkg_dir)
         # add package to managed packages dict
         package_data = {'name': package_name,
+                        'maintainer': g.name,
                         'roslab_version': __version__,
+                        'pkg_version': '0.0.1',
                         'backend': backend,
                         'libraries': [],
                         'nodes': [],
@@ -1502,12 +1528,12 @@ class Controller(object):
         # create data
         library_data = {
             'name': library,
-            'author': str(g.author),
+            'author': str(g.name),
             'copyright': str(g.place),
             'credits': [],
             'email': str(g.email),
             'info': 'TODO',
-            'maintainer': str(g.author),
+            'maintainer': str(g.name),
             'license': 'TODO',
             'status': 'freshly generated',
             'version': '0.0.1'
@@ -1781,6 +1807,23 @@ class Controller(object):
         return param
 
     @staticmethod
+    def set_ros_launch_node_args(package, launch_file, node):
+        # get data
+        ros_launch_node_data = Controller.get_ros_launch_node_data(package, launch_file, node)
+        # user input
+        args, ok = QInputDialog.getText(
+            Controller._parent_widget, 'Set ROS launch node args', 'args:')
+        args = str(args)
+        if not ok or args == '':
+            return None
+        # set machine
+        ros_launch_node_data['args'] = str(args)
+        # mark changed
+        Controller.data_changed()
+        # return machine name
+        return args
+
+    @staticmethod
     def set_ros_launch_node_machine(package, launch_file, node):
         # get data
         ros_launch_node_data = Controller.get_ros_launch_node_data(package, launch_file, node)
@@ -1963,7 +2006,7 @@ class Controller(object):
         machine, ok = QInputDialog.getText(Controller._parent_widget, 'Add state machine to library', 'name:')
         machine = str(machine)
         if not ok or machine == '':
-            return None
+            return None, None
         # setup fsm data
         fsm_data = {
             'name': machine,
@@ -1987,17 +2030,18 @@ class Controller(object):
         if 'functions' not in library_data:
             library_data['functions'] = []
         # append functions list with start state handler
-        library_data['functions'].append({
+        function_data = {
             'name': '{}_start_state_handler'.format(machine),
             'args': [{'name': 'cargo', 'default': 'None'}],
-            'code': '# TODO: implement me!\nreturn {}_finished_state, None # new_state, new_state_cargo'.format(machine)
-        })
+            'code': "# TODO: implement me!\nreturn ('{}_finished_state', None) # new_state, new_state_cargo".format(machine)
+        }
+        library_data['functions'].append(function_data)
         # mark changed
         Controller.data_changed()
         # update preview
         Controller.preview_library(package=package, library=library)
         # return created data
-        return fsm_data
+        return fsm_data, function_data
 
     @staticmethod
     def add_machine_state(package, library, machine):
