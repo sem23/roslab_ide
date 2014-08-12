@@ -2,6 +2,13 @@
 
 Simple integrated development environment, designed to use the benefits of the ROS framework.
 
+## Requierements
+
+ROSLab depends on PyGraphViz for Finite State Machine visualization, QScintilla for function/code editing and PyQt for the GUI itself.
+
+```
+sudo apt-get install python-pygraphviz python-qscintilla2 python-qt4
+```
 
 ## Description
 
